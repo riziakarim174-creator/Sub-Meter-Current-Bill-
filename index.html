@@ -1,6 +1,7 @@
 <!DOCTYPE html>
 <html lang="bn">
 <head>
+<link rel="preconnect" href="https://fonts.googleapis.com"><link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=Hind+Siliguri:wght@400;500;600;700&display=swap" rel="stylesheet">
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>বিদ্যুৎ বিল হিসাব</title>
@@ -185,6 +186,11 @@
   tr.row-paid{background:var(--volt-soft);}
   tr.row-paid td{border-bottom-color:#d3e6da;}
 
+  .arrears-note{font-size:10.5px; color:var(--warn); margin-top:4px; line-height:1.4; max-width:180px;}
+  .arrears-note.cleared{color:var(--volt);}
+  .due-reminder{ background:#f3e9d2; color:var(--brass-dark); padding:10px 14px; border-radius:9px;
+    font-size:12.5px; margin-top:12px; line-height:1.7;}
+
   .backup-bar{display:flex; gap:8px; justify-content:flex-end; margin-bottom:16px; flex-wrap:wrap;}
   .btn-sm{padding:7px 12px; font-size:12.5px; border-radius:8px;}
   .summary-stats{display:flex; gap:10px; margin:14px 0 18px; flex-wrap:wrap;}
@@ -214,23 +220,56 @@
     td,th{padding:7px 5px;}
     .reading-table input{padding:5px 6px; font-size:12px;}
   }
+
+  :root{--ink:#0f172a;--paper:#f4f6fb;--card:#fff;--line:#e5e9f2;--brass:#4f46e5;--brass-dark:#3730a3;--volt:#059669;--volt-soft:#ecfdf5;--warn:#dc2626;--warn-soft:#fef2f2;--muted:#64748b;--radius:14px;--shadow:0 1px 2px rgba(15,23,42,.05),0 6px 20px -10px rgba(15,23,42,.12);--sans:'Inter','Hind Siliguri','Noto Sans Bengali',system-ui,sans-serif;--serif:var(--sans);--mono:var(--sans)}
+  body{background:var(--paper);font-feature-settings:"tnum"}
+  h1,h2,h3,.hist-month{font-family:var(--sans)!important;letter-spacing:-.01em}
+  .topbar{max-width:none;margin:0;padding:12px max(20px,calc((100% - 980px)/2));background:#fff;border-bottom:1px solid var(--line);position:sticky;top:0;z-index:20;align-items:center}
+  .brand h1{font-size:17px;font-weight:700}.brand-mark{background:linear-gradient(135deg,#6366f1,#4338ca);border-radius:11px;width:36px;height:36px}
+  .topbar-right{display:flex;align-items:center;gap:8px}.user-chip{font-size:12.5px;font-weight:600;color:var(--muted)}
+  .month-pill{background:#eef2ff;border:none;color:var(--brass-dark);font-size:12.5px}
+  .tabs{background:transparent;border:none;box-shadow:none;border-bottom:1px solid var(--line);border-radius:0;padding:0;gap:22px}
+  .tab{flex:none;padding:12px 2px;border-radius:0;border-bottom:2px solid transparent;margin-bottom:-1px;background:none!important}
+  .tab.active{color:var(--brass-dark);border-bottom-color:var(--brass)}
+  .card,.meter-block,.hist-item,.stat{border-radius:var(--radius);box-shadow:var(--shadow)}.stat,.meter-block{box-shadow:none}
+  .btn{border-radius:10px}.btn-primary{background:var(--brass)}.btn-primary:hover{background:var(--brass-dark)}
+  input,select{border-radius:10px;background:#fff}input:focus,select:focus{outline:2px solid #c7d2fe;border-color:var(--brass)}
+  th{background:#f8fafc;font-size:10.5px}td.num,th.num,.stat .v,.hist-total{font-family:var(--sans);font-variant-numeric:tabular-nums}
+  .pay-pill.unpaid{border-color:#f59e0b;color:#b45309;background:#fffbeb}.pay-pill.paid{background:var(--volt);border-color:var(--volt)}
+  .paid-on{display:inline-flex;align-items:center;gap:4px;margin-top:6px;font-size:11px;font-weight:600;color:var(--volt);background:#d1fae5;padding:3px 8px;border-radius:6px;white-space:nowrap}
+  tr.row-paid{background:#f0fdf4}.due-reminder{background:#fffbeb;color:#92400e;border:1px solid #fde68a}
+  body.locked .topbar,body.locked .wrap{display:none}
+  .login-overlay{position:fixed;inset:0;z-index:100;display:flex;background:linear-gradient(135deg,#eef2ff,#f4f6fb 55%,#ecfdf5);overflow:auto}
+  .login-side{flex:1;padding:56px;display:flex;flex-direction:column;justify-content:center;max-width:520px;margin-left:auto}
+  .login-side h2{font-size:30px;line-height:1.25;margin:18px 0 10px;font-weight:800}.login-side p{color:var(--muted);line-height:1.7;margin:0 0 18px}
+  .login-side li{list-style:none;padding:8px 0 8px 28px;position:relative;font-size:14px;color:#334155}.login-side ul{margin:0;padding:0}
+  .login-side li:before{content:"✓";position:absolute;left:0;color:var(--volt);font-weight:800}
+  .login-box{flex:1;max-width:460px;margin:auto 40px auto 0;background:#fff;border:1px solid var(--line);border-radius:18px;padding:30px;box-shadow:0 20px 50px -20px rgba(15,23,42,.25)}
+  .login-box h3{margin:0 0 4px;font-size:20px}.login-box .hint{color:var(--muted);font-size:13px;margin:0 0 14px}.login-box label{margin-top:12px}
+  .login-err{color:var(--warn);font-size:12.5px;margin-top:10px;min-height:16px}.login-foot{font-size:11.5px;color:var(--muted);margin-top:14px;line-height:1.6}
+  @media(max-width:820px){.login-overlay{flex-direction:column}.login-side{padding:28px 22px 6px;max-width:none}.login-side h2{font-size:23px}.login-box{margin:16px;max-width:none}.tabs{gap:14px;overflow-x:auto}}
 </style>
 </head>
-<body>
-
-<div class="topbar">
-  <div class="brand">
-    <div class="brand-mark">
-      <svg viewBox="0 0 24 24" fill="none"><path d="M13 2L4 14h6l-1 8 9-12h-6l1-8z" fill="#f6f3ec"/></svg>
-    </div>
-    <div>
-      <h1>বিদ্যুৎ বিল হিসাব</h1>
-      <p>মিটার &amp; সাব-মিটার বিল ভাগ</p>
-    </div>
+<body class="locked">
+<div class="login-overlay" id="loginOverlay">
+  <div class="login-side"><div class="brand"><div class="brand-mark"><svg viewBox="0 0 24 24" fill="none"><path d="M13 2L4 14h6l-1 8 9-12h-6l1-8z" fill="#fff"/></svg></div><h1>বিদ্যুৎ বিল হিসাব</h1></div>
+    <h2>বাড়িভাড়ার বিদ্যুৎ বিল, এক জায়গায় পরিষ্কার হিসাব</h2><p>মেইন মিটারের বিল থেকে প্রতিটি সাব-মিটার হোল্ডারের ভাগ নিজে নিজেই হিসাব হয়ে যায়।</p>
+    <ul><li>রিডিং দিলেই ইউনিট ও প্রতি ইউনিটের রেট বের হয়</li><li>বকেয়া পরের মাসের বিলে অটো যোগ হয়</li><li>কবে পরিশোধ হলো তার তারিখসহ পূর্ণ হিস্ট্রি</li><li>ডেটা এই ব্রাউজারে সেভ থাকে; হিস্ট্রি ট্যাব থেকে ব্যাকআপ নেওয়া যায়</li></ul></div>
+  <div class="login-box">
+    <div id="loginForm"><h3>লগইন</h3><p class="hint">Username ও PIN দিয়ে প্রবেশ করুন</p>
+      <label>Username</label><input id="lgUser" autocomplete="username"><label>PIN</label><input id="lgPin" type="password" inputmode="numeric" maxlength="8" autocomplete="current-password" onkeydown="if(event.key==='Enter')loginUser()">
+      <button class="btn btn-primary" style="width:100%;margin-top:16px;justify-content:center" onclick="loginUser()">লগইন</button>
+      <button class="btn btn-ghost" style="width:100%;margin-top:8px;justify-content:center" onclick="toggleAuth(true)">নতুন অ্যাকাউন্ট</button></div>
+    <div id="regForm" style="display:none"><h3>নতুন অ্যাকাউন্ট</h3><p class="hint">Username ও ৪–৮ সংখ্যার PIN সেট করুন</p>
+      <label>Username</label><input id="rgUser" autocomplete="username"><label>PIN</label><input id="rgPin" type="password" inputmode="numeric" maxlength="8"><label>PIN আবার</label><input id="rgPin2" type="password" inputmode="numeric" maxlength="8">
+      <button class="btn btn-primary" style="width:100%;margin-top:16px;justify-content:center" onclick="registerUser()">তৈরি করুন</button>
+      <button class="btn btn-ghost" style="width:100%;margin-top:8px;justify-content:center" onclick="toggleAuth(false)">লগইনে ফিরুন</button></div>
+    <div class="login-err" id="loginErr"></div>
   </div>
-  <div class="month-pill" id="currentMonthPill">—</div>
 </div>
 
+
+<header class="topbar"><div class="brand"><div class="brand-mark"><svg viewBox="0 0 24 24" fill="none"><path d="M13 2L4 14h6l-1 8 9-12h-6l1-8z" fill="#fff"/></svg></div><h1>বিদ্যুৎ বিল হিসাব</h1></div><div class="topbar-right"><span class="month-pill" id="currentMonthPill">—</span><span class="user-chip" id="userChip"></span><button class="btn btn-ghost btn-sm" onclick="logoutUser()">লগআউট</button></div></header>
 <div class="wrap">
 
   <div class="tabs">
@@ -243,7 +282,6 @@
   <div class="view active" id="view-setup">
     <div class="card">
       <h2>মেইন মিটার যোগ করুন</h2>
-      <p class="sub">প্রতিটা তলা / ইউনিটের মেইন মিটার আগে বানান, তারপর তার নিচে সাব-মিটার যোগ করুন।</p>
       <div class="row">
         <div style="flex:2;">
           <label for="newMeterName">মিটারের নাম</label>
@@ -276,7 +314,6 @@
           <button class="btn btn-ghost" style="width:100%;" onclick="loadDraftForMonth()">লোড করুন</button>
         </div>
       </div>
-      <p class="field-note">আগের মাসের সাব-মিটার রিডিং অটোমেটিক এই মাসের "আগের রিডিং" ঘরে চলে আসবে।</p>
     </div>
 
     <div id="calcMetersContainer"></div>
@@ -287,7 +324,6 @@
 
     <div class="card" id="saveBar" style="display:none;">
       <button class="btn btn-primary" onclick="saveMonth()">✓ এই মাসের হিসাব সেভ করুন</button>
-      <span class="field-note" style="margin-left:10px;">সেভ করলে হিস্ট্রিতে যোগ হবে, এবং পরের মাসে "আগের রিডিং" হিসেবে ব্যবহার হবে।</span>
     </div>
   </div>
 
@@ -302,7 +338,6 @@
     <div class="empty" id="historyEmpty" style="display:none;">
       <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><circle cx="12" cy="12" r="9"/><path d="M12 7v5l3 3"/></svg>
       <p>এখনো কোনো মাসের হিসাব সেভ করা হয়নি।</p>
-      <p class="field-note">টিপস: মাসের হিসাব সেভ করার পর এখানে দেখা যাবে, আর ব্রাউজার বন্ধ করলেও ডেটা থেকে যাবে — যতক্ষণ না ব্রাউজারের ডেটা/ক্যাশ মুছে ফেলা হয়।</p>
     </div>
   </div>
 
@@ -325,13 +360,27 @@ const STORE_KEY = 'billApp_meters_v1';
 const HISTORY_KEY = 'billApp_history_v2';
 const DRAFTS_KEY = 'billApp_drafts_v2';
 
-function loadMeters(){ try{ return JSON.parse(localStorage.getItem(STORE_KEY)) || []; }catch(e){ return []; } }
-function saveMeters(m){ localStorage.setItem(STORE_KEY, JSON.stringify(m)); }
-function loadHistory(){ try{ return JSON.parse(localStorage.getItem(HISTORY_KEY)) || []; }catch(e){ return []; } }
-function saveHistory(h){ localStorage.setItem(HISTORY_KEY, JSON.stringify(h)); }
-function loadDrafts(){ try{ return JSON.parse(localStorage.getItem(DRAFTS_KEY)) || {}; }catch(e){ return {}; } }
-function saveDrafts(d){ localStorage.setItem(DRAFTS_KEY, JSON.stringify(d)); }
+let currentUser=sessionStorage.getItem('bh_user')||'';
+const ACC='bh_accounts';
+function accs(){try{return JSON.parse(localStorage.getItem(ACC))||{}}catch(e){return {}}}
+function uk(k){return k+'__'+currentUser}
+async function hp(x){try{const b=await crypto.subtle.digest('SHA-256',new TextEncoder().encode('bh:'+x));return [...new Uint8Array(b)].map(v=>v.toString(16).padStart(2,'0')).join('')}catch(e){let h=5381;for(const c of 'bh:'+x)h=((h<<5)+h+c.charCodeAt(0))|0;return 'f'+h}}
+function toggleAuth(reg){document.getElementById('loginForm').style.display=reg?'none':'block';document.getElementById('regForm').style.display=reg?'block':'none';authErr('')}
+function authErr(m){document.getElementById('loginErr').textContent=m}
+async function loginUser(){const u=lgUser.value.trim().toLowerCase(),a=accs();if(!a[u])return authErr('Username পাওয়া যায়নি');if(a[u]!==await hp(lgPin.value))return authErr('PIN সঠিক নয়');currentUser=u;sessionStorage.setItem('bh_user',u);enterApp()}
+async function registerUser(){const u=rgUser.value.trim().toLowerCase(),a=accs();if(!/^[a-z0-9_.-]{3,30}$/.test(u))return authErr('Username ৩–৩০ অক্ষর (a-z, 0-9, _ . -)');if(a[u])return authErr('এই username আগে থেকেই আছে');if(!/^\d{4,8}$/.test(rgPin.value))return authErr('PIN ৪–৮ সংখ্যার হতে হবে');if(rgPin.value!==rgPin2.value)return authErr('দুটি PIN মেলেনি');
+  const first=!Object.keys(a).length;a[u]=await hp(rgPin.value);localStorage.setItem(ACC,JSON.stringify(a));currentUser=u;sessionStorage.setItem('bh_user',u);
+  if(first)[STORE_KEY,HISTORY_KEY,DRAFTS_KEY].forEach(k=>{const v=localStorage.getItem(k);if(v!==null)localStorage.setItem(uk(k),v)});enterApp()}
+function logoutUser(){sessionStorage.removeItem('bh_user');location.reload()}
+function enterApp(){document.getElementById('loginOverlay').style.display='none';document.body.classList.remove('locked');userChip.textContent='👤 '+currentUser;meters=loadMeters();renderSetupView();renderCalcView();renderHistoryView()}
+function fmtDate(i){const d=new Date(i);return d.toLocaleDateString('bn-BD',{day:'numeric',month:'long',year:'numeric'})+', '+d.toLocaleTimeString('bn-BD',{hour:'2-digit',minute:'2-digit'})}
 
+function loadMeters(){ try{ return JSON.parse(localStorage.getItem(uk(STORE_KEY))) || []; }catch(e){ return []; } }
+function saveMeters(m){ localStorage.setItem(uk(STORE_KEY), JSON.stringify(m)); }
+function loadHistory(){ try{ return JSON.parse(localStorage.getItem(uk(HISTORY_KEY))) || []; }catch(e){ return []; } }
+function saveHistory(h){ localStorage.setItem(uk(HISTORY_KEY), JSON.stringify(h)); }
+function loadDrafts(){ try{ return JSON.parse(localStorage.getItem(uk(DRAFTS_KEY))) || {}; }catch(e){ return {}; } }
+function saveDrafts(d){ localStorage.setItem(uk(DRAFTS_KEY), JSON.stringify(d)); }
 let meters = loadMeters();
 function uid(){ return 'm' + Math.random().toString(36).slice(2,9); }
 
@@ -527,6 +576,22 @@ function computeMeterBreakdown(meter, totalBillRaw, meterChargeRaw, subsReadings
   return { totalBill, meterCharge, remaining, subCount, equalShare, totalUnits, perUnitRate, subsResult, distributedSum, reconciled };
 }
 
+// Sum of unpaid earlier months (strictly before `beforeYm`) for one sub-meter,
+// so an unpaid January shows up as arrears once February's bill exists.
+function getArrearsForSub(meterId, subId, beforeYm){
+  const history = loadHistory().filter(h=>h.ym < beforeYm).sort((a,b)=> a.ym < b.ym ? -1 : 1);
+  const months = [];
+  let total = 0;
+  history.forEach(h=>{
+    const m = h.meters.find(mm=>mm.id===meterId);
+    if(!m) return;
+    const s = m.subs.find(ss=>ss.id===subId);
+    if(!s) return;
+    if(!s.paid){ months.push({ ym:h.ym, amount:s.total }); total += s.total; }
+  });
+  return { total, months };
+}
+
 function getPrevReadingFromHistory(meterId, subId, ym){
   const history = loadHistory().filter(h=>h.ym < ym).sort((a,b)=> a.ym < b.ym ? 1 : -1);
   for(const rec of history){
@@ -607,7 +672,6 @@ function renderCalcView(){
           <input type="number" min="0" step="0.01" class="meterChargeInput" data-meter="${meter.id}" value="${md.meterCharge ?? ''}" placeholder="যেমনঃ 500">
         </div>
       </div>
-      <p class="field-note">প্রতিটা সাব-মিটার হোল্ডার এই মিটার চার্জের পুরোটাই দেবে (ভাগ হবে না, সবার জন্য সমান)। বাকি টাকা (মোট বিল − মিটার চার্জ×সাব-মিটার সংখ্যা) ব্যবহৃত ইউনিট অনুযায়ী ভাগ হবে।</p>
 
       ${meter.subs.length > 0 ? `
       <div class="divider"></div>
@@ -683,6 +747,7 @@ function computeAndRenderMeter(meter){
 
   if(meter.subs.length === 0){ resultDiv.innerHTML=''; return; }
 
+  const ym = calcMonthInput.value;
   let rows = '';
   result.subsResult.forEach(s=>{
     rows += `<tr>
@@ -693,6 +758,19 @@ function computeAndRenderMeter(meter){
       <td class="num" style="font-weight:700;">৳${(s.total||0).toFixed(2)}</td>
     </tr>`;
   });
+
+  // Outstanding-dues reminder: look at each sub's SAVED history strictly before this
+  // month and flag anyone who still owes from an earlier month, so the arrear is
+  // visible while this month's bill is being prepared (actual paid/unpaid tracking
+  // and the "pay clears arrears too" action live in the History tab).
+  let arrearsNotes = [];
+  meter.subs.forEach(sub=>{
+    const ar = getArrearsForSub(meter.id, sub.id, ym);
+    if(ar.total > 0.005){
+      arrearsNotes.push(`<b>${sub.label}${sub.name?' ('+escapeHtml(sub.name)+')':''}</b>: ৳${ar.total.toFixed(2)} বাকি (${ar.months.map(m=>formatMonthLabel(m.ym)).join(', ')})`);
+    }
+  });
+  const arrearsBanner = arrearsNotes.length ? `<div class="due-reminder">⏳ পূর্বের বকেয়া — এই মাসের বিলের সাথে এগুলোও আদায় করতে হবে:<br>${arrearsNotes.join('<br>')}</div>` : '';
 
   let banner = '';
   if(result.remaining < -0.005){
@@ -715,6 +793,7 @@ function computeAndRenderMeter(meter){
       <tbody>${rows}</tbody>
     </table>
     ${banner}
+    ${arrearsBanner}
   `;
 }
 
@@ -762,7 +841,7 @@ function saveMonth(){
   renderCalcView();
 }
 
-/* ---------------- PAYMENT TRACKING ---------------- */
+/* ---------------- PAYMENT TRACKING (with arrears cascade) ---------------- */
 function togglePaid(ym, meterId, subId){
   const history = loadHistory();
   const rec = history.find(h=>h.ym===ym);
@@ -771,12 +850,54 @@ function togglePaid(ym, meterId, subId){
   if(!m) return;
   const s = m.subs.find(ss=>ss.id===subId);
   if(!s) return;
-  s.paid = !s.paid;
-  s.paidAt = s.paid ? new Date().toISOString() : null;
+
+  if(s.paid){
+    // Undo — only unmarks THIS month; earlier months that were cleared alongside it
+    // (if any) stay paid, since that money was genuinely received.
+    if(!confirm('এই মাসটিকে আবার "বাকি" হিসেবে চিহ্নিত করতে চান?')) return;
+    s.paid = false;
+    s.paidAt = null;
+    s.settledArrears = null;
+    saveHistory(history);
+    renderHistoryView();
+    openDetailModal(rec);
+    toast('বাকি হিসেবে ফিরিয়ে নেওয়া হলো');
+    return;
+  }
+
+  // Marking paid: pull in any still-unpaid EARLIER months for this same sub-meter,
+  // since paying the current bill logically clears the running arrears first.
+  const arrears = getArrearsForSub(meterId, subId, ym); // months strictly before `ym`, unpaid
+  const thisAmount = s.total;
+  const grandTotal = arrears.total + thisAmount;
+
+  if(arrears.months.length > 0){
+    const list = arrears.months.map(a=>`${formatMonthLabel(a.ym)} ৳${a.amount.toFixed(2)}`).join(', ');
+    const ok = confirm(
+      `এই সাব-মিটারের আগের বকেয়া আছে: ${list} (মোট ৳${arrears.total.toFixed(2)})।\n` +
+      `${formatMonthLabel(ym)}-এর বিল ৳${thisAmount.toFixed(2)} সহ সব মিলিয়ে ৳${grandTotal.toFixed(2)} পরিশোধিত হিসেবে চিহ্নিত করা হবে। এগোতে চান?`
+    );
+    if(!ok) return;
+  }
+
+  const now = new Date().toISOString();
+  history.forEach(h=>{
+    if(h.ym >= ym) return; // only touch strictly earlier months here
+    const mm = h.meters.find(x=>x.id===meterId); if(!mm) return;
+    const ss = mm.subs.find(x=>x.id===subId); if(!ss) return;
+    if(!ss.paid){ ss.paid = true; ss.paidAt = now; }
+  });
+  s.paid = true;
+  s.paidAt = now;
+  s.settledArrears = arrears.months.length ? arrears.months : null;
+
   saveHistory(history);
   renderHistoryView();
-  openDetailModal(rec);
-  toast(s.paid ? '✓ পরিশোধিত হিসেবে চিহ্নিত হলো' : 'বাকি হিসেবে ফিরিয়ে নেওয়া হলো');
+  const freshRec = loadHistory().find(h=>h.ym===ym);
+  if(freshRec) openDetailModal(freshRec);
+  toast(arrears.months.length
+    ? `✓ ৳${grandTotal.toFixed(2)} পরিশোধিত (এই মাস + ${arrears.months.length}টি আগের বকেয়া)`
+    : '✓ পরিশোধিত হিসেবে চিহ্নিত হলো');
 }
 
 /* ---------------- BACKUP / RESTORE ---------------- */
@@ -838,7 +959,7 @@ function renderHistoryView(){
     const meterCount = rec.meters.length;
     const subCount = rec.meters.reduce((a,m)=>a+m.subs.length,0);
     const paidCount = rec.meters.reduce((a,m)=>a+m.subs.filter(s=>s.paid).length,0);
-    const dueAmount = rec.meters.reduce((a,m)=>a+m.subs.filter(s=>!s.paid).reduce((x,s)=>x+s.total,0),0);
+    const dueAmount = rec.meters.reduce((a,m)=>a+m.subs.filter(s=>!s.paid).reduce((x,s)=>x+s.total+getArrearsForSub(m.id,s.id,rec.ym).total,0),0);
 
     let badge = '';
     if(subCount>0){
@@ -855,7 +976,7 @@ function renderHistoryView(){
         </div>
         <div class="hist-total">৳${rec.grandTotal.toFixed(2)}</div>
       </div>
-      <div class="hist-meta">${meterCount} মেইন মিটার · ${subCount} সাব-মিটার · সেভ: ${new Date(rec.savedAt).toLocaleDateString('bn-BD')}${dueAmount>0.005 ? ` · <span class="due-note">বাকি ৳${dueAmount.toFixed(2)}</span>`:''}</div>
+      <div class="hist-meta">${meterCount} মেইন মিটার · ${subCount} সাব-মিটার · সেভ: ${new Date(rec.savedAt).toLocaleDateString('bn-BD')}${dueAmount>0.005 ? ` · <span class="due-note">সর্বমোট বাকি ৳${dueAmount.toFixed(2)}</span>`:''}</div>
     `;
     item.addEventListener('click', ()=> openDetailModal(rec));
     container.appendChild(item);
@@ -866,7 +987,10 @@ function openDetailModal(rec){
   const content = document.getElementById('detailModalContent');
 
   let paidAmount = 0, dueAmount = 0;
-  rec.meters.forEach(m=> m.subs.forEach(s=>{ if(s.paid) paidAmount += s.total; else dueAmount += s.total; }));
+  rec.meters.forEach(m=> m.subs.forEach(s=>{
+    if(s.paid){ paidAmount += s.total; }
+    else { dueAmount += s.total + getArrearsForSub(m.id, s.id, rec.ym).total; }
+  }));
 
   let html = `<h3>${formatMonthLabel(rec.ym)}</h3><p class="sub">সর্বমোট বিল ৳${rec.grandTotal.toFixed(2)}</p>
     <div class="summary-stats">
@@ -884,17 +1008,22 @@ function openDetailModal(rec){
       <table>
         <thead><tr><th>সাব</th><th class="num">আগের</th><th class="num">বর্তমান</th><th class="num">ইউনিট</th><th class="num">সর্বমোট</th><th class="num">স্ট্যাটাস</th></tr></thead>
         <tbody>
-        ${m.subs.map(s=>`<tr class="${s.paid ? 'row-paid' : ''}">
+        ${m.subs.map(s=>{
+          const arrears = s.paid ? {total:0, months:[]} : getArrearsForSub(m.id, s.id, rec.ym);
+          const dueTotal = s.paid ? 0 : (s.total + arrears.total);
+          return `<tr class="${s.paid ? 'row-paid' : ''}">
           <td><span style="font-family:var(--mono); font-weight:700; color:var(--brass-dark);">${s.label}</span>${s.name?' — '+escapeHtml(s.name):''}</td>
           <td class="num">${s.prev!==null?s.prev.toFixed(2):'—'}</td>
           <td class="num">${s.curr!==null?s.curr.toFixed(2):'—'}</td>
           <td class="num">${s.units.toFixed(2)}</td>
           <td class="num" style="font-weight:700;">৳${s.total.toFixed(2)}</td>
           <td class="num">
-            <button class="pay-pill ${s.paid?'paid':'unpaid'}" onclick="togglePaid('${rec.ym}','${m.id}','${s.id}')">${s.paid ? '✓ পরিশোধিত' : 'বাকি'}</button>
-            ${s.paid && s.paidAt ? `<div class="pay-date">${new Date(s.paidAt).toLocaleDateString('bn-BD')}</div>` : ''}
+            <button class="pay-pill ${s.paid?'paid':'unpaid'}" onclick="togglePaid('${rec.ym}','${m.id}','${s.id}')">${s.paid ? '✓ পরিশোধিত' : (arrears.total>0.005 ? `৳${dueTotal.toFixed(2)} বাকি` : 'বাকি')}</button>
+            ${s.paid && s.paidAt ? `<div class="paid-on">✓ পরিশোধ: ${fmtDate(s.paidAt)}</div>` : ''}
+            ${s.paid && s.settledArrears && s.settledArrears.length ? `<div class="arrears-note cleared">+ ${s.settledArrears.map(a=>formatMonthLabel(a.ym)).join(', ')}-এর বকেয়াও এর সাথে সাফ হয়েছে</div>` : ''}
+            ${!s.paid && arrears.total>0.005 ? `<div class="arrears-note">এই মাস ৳${s.total.toFixed(2)} + পূর্বের ৳${arrears.total.toFixed(2)} (${arrears.months.map(a=>formatMonthLabel(a.ym)).join(', ')})</div>` : ''}
           </td>
-        </tr>`).join('')}
+        </tr>`;}).join('')}
         </tbody>
       </table>
     </div>`;
@@ -907,9 +1036,7 @@ function closeDetailModal(){ document.getElementById('detailModal').classList.re
 document.getElementById('detailModal').addEventListener('click', (e)=>{ if(e.target.id === 'detailModal') closeDetailModal(); });
 
 /* ---------------- INIT ---------------- */
-renderSetupView();
-renderCalcView();
-renderHistoryView();
+if(currentUser&&accs()[currentUser])enterApp();
 </script>
 </body>
 </html>
