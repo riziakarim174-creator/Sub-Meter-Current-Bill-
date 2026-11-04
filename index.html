@@ -286,7 +286,8 @@
 <body class="locked">
 <div class="login-overlay" id="loginOverlay">
   <div class="login-side"><div class="brand"><div class="brand-mark"><svg viewBox="0 0 24 24" fill="none"><path d="M13 2L4 14h6l-1 8 9-12h-6l1-8z" fill="#fff"/></svg></div><h1>বিদ্যুৎ বিল হিসাব</h1></div>
-   </div>
+    <h2>বাড়িভাড়ার বিদ্যুৎ বিল, এক জায়গায় পরিষ্কার হিসাব</h2><p>মেইন মিটারের বিল থেকে প্রতিটি সাব-মিটার হোল্ডারের ভাগ নিজে নিজেই হিসাব হয়ে যায়।</p>
+    <ul><li>রিডিং দিলেই ইউনিট ও প্রতি ইউনিটের রেট বের হয়</li><li>বকেয়া পরের মাসের বিলে অটো যোগ হয়</li><li>কবে পরিশোধ হলো তার তারিখসহ পূর্ণ হিস্ট্রি</li><li>ডেটা এই ব্রাউজারে সেভ থাকে; হিস্ট্রি ট্যাব থেকে ব্যাকআপ নেওয়া যায়</li></ul></div>
   <div class="login-box">
     <div id="loginForm"><h3>লগইন</h3><p class="hint">Username ও PIN দিয়ে প্রবেশ করুন</p>
       <label>Username</label><input id="lgUser" autocomplete="username"><label>PIN</label><input id="lgPin" type="password" inputmode="numeric" maxlength="8" autocomplete="current-password" onkeydown="if(event.key==='Enter')loginUser()">
@@ -304,7 +305,7 @@
 <header class="topbar"><div class="brand"><div class="brand-mark"><svg viewBox="0 0 24 24" fill="none"><path d="M13 2L4 14h6l-1 8 9-12h-6l1-8z" fill="#fff"/></svg></div><h1>বিদ্যুৎ বিল হিসাব</h1></div><div class="topbar-right"><span class="month-pill" id="currentMonthPill">—</span><div class="profile-wrap"><button class="profile-trigger" id="profileTrigger" onclick="toggleProfile()"><span class="profile-avatar" id="profileAvatar">U</span><span class="profile-trigger-text"><b id="profileName">Profile</b><small>My account · ⋮</small></span><span aria-hidden="true">⋮</span></button><div class="profile-panel" id="profilePanel"><div class="profile-head"><span class="profile-avatar" id="profileAvatarLarge">U</span><div><b id="profileNameLarge">User</b><small id="profileIdLabel">Local account</small></div></div><div class="offline-status"><span class="offline-dot"></span><span id="offlineStatusText">Offline-ready · এই ডিভাইসে সেভ হবে</span></div><div class="profile-tools"><label for="languageSelect" style="margin:0">ভাষা / Language</label><select id="languageSelect" onchange="setAppLanguage(this.value)"><option value="bn">বাংলা</option><option value="en">English</option></select></div><div class="profile-nav-section"><div class="profile-nav-title" id="navTitle">মেনু / Menu</div><div class="nav-menu" id="navMenu"><div class="tab active" data-view="setup">মিটার সেটআপ</div><div class="tab" data-view="calc">এই মাসের হিসাব</div><div class="tab" data-view="history">হিস্ট্রি / ব্যাকআপ</div></div></div><button class="btn btn-ghost profile-logout" onclick="logoutUser()">লগআউট / Log out</button></div></div></div></header>
 <div class="wrap">
 
-  <div class="prototype-note"></div>
+  <div class="prototype-note">Prototype preview: ডেটা এই browser/device-এ local save হয়। Cloud sync এখনো সংযুক্ত নয়—MongoDB setup পরের ধাপ।</div>
 
   <!-- SETUP VIEW -->
   <div class="view active" id="view-setup">
@@ -401,12 +402,22 @@ async function registerUser(){const u=rgUser.value.trim().toLowerCase(),a=accs()
   const first=!Object.keys(a).length;a[u]=await hp(rgPin.value);localStorage.setItem(ACC,JSON.stringify(a));currentUser=u;sessionStorage.setItem('bh_user',u);
   if(first)[STORE_KEY,HISTORY_KEY,DRAFTS_KEY].forEach(k=>{const v=localStorage.getItem(k);if(v!==null)localStorage.setItem(uk(k),v)});enterApp()}
 function logoutUser(){sessionStorage.removeItem('bh_user');location.reload()}
-function enterApp(){document.getElementById('loginOverlay').style.display='none';document.body.classList.remove('locked');userChip.textContent='👤 '+currentUser;initProfile();meters=loadMeters();renderSetupView();renderCalcView();renderHistoryView()}
+function migrateLegacyData(){
+  [STORE_KEY,HISTORY_KEY,DRAFTS_KEY,LOG_KEY].forEach(k=>{
+    const scoped=uk(k), existing=localStorage.getItem(scoped), legacy=localStorage.getItem(k);
+    if((existing===null || existing==='[]' || existing==='{}') && legacy!==null && legacy!=='[]' && legacy!=='{}') localStorage.setItem(scoped,legacy);
+  });
+}
+function enterApp(){migrateLegacyData();document.getElementById('loginOverlay').style.display='none';document.body.classList.remove('locked');userChip.textContent='👤 '+currentUser;initProfile();meters=loadMeters();
+  // Recover meter definitions from saved history if the setup key was lost during an older version update.
+  if(!meters.length){const hs=loadHistory().slice().sort((a,b)=>a.ym<b.ym?1:-1);if(hs.length){const latest=hs[0];meters=(latest.meters||[]).map(m=>({id:m.id,name:m.name,subs:(m.subs||[]).map(x=>({id:x.id,label:x.label,name:x.name||''}))}));if(meters.length)saveMeters(meters);}}
+  renderSetupView();renderCalcView();renderHistoryView()}
+
 function fmtDate(i){const d=new Date(i);return d.toLocaleDateString('bn-BD',{day:'numeric',month:'long',year:'numeric'})+', '+d.toLocaleTimeString('bn-BD',{hour:'2-digit',minute:'2-digit'})}
 
 function loadMeters(){ try{ return JSON.parse(localStorage.getItem(uk(STORE_KEY))) || []; }catch(e){ return []; } }
 function saveMeters(m){ localStorage.setItem(uk(STORE_KEY), JSON.stringify(m)); }
-function loadHistory(){ try{ return JSON.parse(localStorage.getItem(uk(HISTORY_KEY))) || []; }catch(e){ return []; } }
+function loadHistory(){ try{ const h=JSON.parse(localStorage.getItem(uk(HISTORY_KEY)))||[]; return Array.isArray(h)?h.filter(x=>x&&x.ym&&Array.isArray(x.meters)).map(x=>({...x,meters:x.meters.map(m=>({...m,subs:Array.isArray(m.subs)?m.subs:[]}))})):[]; }catch(e){ return []; } }
 function saveHistory(h){ localStorage.setItem(uk(HISTORY_KEY), JSON.stringify(h)); }
 function loadDrafts(){ try{ return JSON.parse(localStorage.getItem(uk(DRAFTS_KEY))) || {}; }catch(e){ return {}; } }
 function saveDrafts(d){ localStorage.setItem(uk(DRAFTS_KEY), JSON.stringify(d)); }
@@ -637,20 +648,22 @@ function getArrearsForSub(meterId, subId, beforeYm){
   return { total, months };
 }
 
+function findHistoryMeter(rec,meterId){
+  const current=meters.find(x=>x.id===meterId);
+  return (rec.meters||[]).find(mm=>mm.id===meterId) || (current?(rec.meters||[]).find(mm=>mm.name===current.name):null) || null;
+}
+function findHistorySub(histMeter,subId,meterId){
+  const currentMeter=meters.find(x=>x.id===meterId), currentSub=currentMeter&&currentMeter.subs.find(x=>x.id===subId);
+  return (histMeter.subs||[]).find(ss=>ss.id===subId) || (currentSub?(histMeter.subs||[]).find(ss=>ss.label===currentSub.label):null) || null;
+}
 function getPrevReadingFromHistory(meterId, subId, ym){
-  const history = loadHistory().filter(h=>h.ym < ym).sort((a,b)=> a.ym < b.ym ? 1 : -1);
-  for(const rec of history){
-    const m = rec.meters.find(mm=>mm.id===meterId);
-    if(m){
-      const s = m.subs.find(ss=>ss.id===subId);
-      if(s && s.curr!==null && s.curr!==undefined) return s.curr;
-    }
-  }
+  const history=loadHistory().filter(h=>h.ym<ym).sort((a,b)=>a.ym<b.ym?1:-1);
+  for(const rec of history){const m=findHistoryMeter(rec,meterId);if(!m)continue;const sub=findHistorySub(m,subId,meterId);if(sub&&sub.curr!==null&&sub.curr!==undefined&&sub.curr!=='')return sub.curr;}
   return null;
 }
 
 /* ---------------- CALC VIEW ---------------- */
-function loadDraftForMonth(){ renderCalcView(); }
+function loadDraftForMonth(){ renderCalcView(); toast('মাসের তথ্য লোড হয়েছে'); }
 
 function getDraftForMonth(ym){
   const drafts = loadDrafts();
