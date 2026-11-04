@@ -286,8 +286,7 @@
 <body class="locked">
 <div class="login-overlay" id="loginOverlay">
   <div class="login-side"><div class="brand"><div class="brand-mark"><svg viewBox="0 0 24 24" fill="none"><path d="M13 2L4 14h6l-1 8 9-12h-6l1-8z" fill="#fff"/></svg></div><h1>বিদ্যুৎ বিল হিসাব</h1></div>
-    <h2>বাড়িভাড়ার বিদ্যুৎ বিল, এক জায়গায় পরিষ্কার হিসাব</h2><p>মেইন মিটারের বিল থেকে প্রতিটি সাব-মিটার হোল্ডারের ভাগ নিজে নিজেই হিসাব হয়ে যায়।</p>
-    <ul><li>রিডিং দিলেই ইউনিট ও প্রতি ইউনিটের রেট বের হয়</li><li>বকেয়া পরের মাসের বিলে অটো যোগ হয়</li><li>কবে পরিশোধ হলো তার তারিখসহ পূর্ণ হিস্ট্রি</li><li>ডেটা এই ব্রাউজারে সেভ থাকে; হিস্ট্রি ট্যাব থেকে ব্যাকআপ নেওয়া যায়</li></ul></div>
+    </ul></div>
   <div class="login-box">
     <div id="loginForm"><h3>লগইন</h3><p class="hint">Username ও PIN দিয়ে প্রবেশ করুন</p>
       <label>Username</label><input id="lgUser" autocomplete="username"><label>PIN</label><input id="lgPin" type="password" inputmode="numeric" maxlength="8" autocomplete="current-password" onkeydown="if(event.key==='Enter')loginUser()">
@@ -305,7 +304,7 @@
 <header class="topbar"><div class="brand"><div class="brand-mark"><svg viewBox="0 0 24 24" fill="none"><path d="M13 2L4 14h6l-1 8 9-12h-6l1-8z" fill="#fff"/></svg></div><h1>বিদ্যুৎ বিল হিসাব</h1></div><div class="topbar-right"><span class="month-pill" id="currentMonthPill">—</span><div class="profile-wrap"><button class="profile-trigger" id="profileTrigger" onclick="toggleProfile()"><span class="profile-avatar" id="profileAvatar">U</span><span class="profile-trigger-text"><b id="profileName">Profile</b><small>My account · ⋮</small></span><span aria-hidden="true">⋮</span></button><div class="profile-panel" id="profilePanel"><div class="profile-head"><span class="profile-avatar" id="profileAvatarLarge">U</span><div><b id="profileNameLarge">User</b><small id="profileIdLabel">Local account</small></div></div><div class="offline-status"><span class="offline-dot"></span><span id="offlineStatusText">Offline-ready · এই ডিভাইসে সেভ হবে</span></div><div class="profile-tools"><label for="languageSelect" style="margin:0">ভাষা / Language</label><select id="languageSelect" onchange="setAppLanguage(this.value)"><option value="bn">বাংলা</option><option value="en">English</option></select></div><div class="profile-nav-section"><div class="profile-nav-title" id="navTitle">মেনু / Menu</div><div class="nav-menu" id="navMenu"><div class="tab active" data-view="setup">মিটার সেটআপ</div><div class="tab" data-view="calc">এই মাসের হিসাব</div><div class="tab" data-view="history">হিস্ট্রি / ব্যাকআপ</div></div></div><button class="btn btn-ghost profile-logout" onclick="logoutUser()">লগআউট / Log out</button></div></div></div></header>
 <div class="wrap">
 
-  <div class="prototype-note">Prototype preview: ডেটা এই browser/device-এ local save হয়। Cloud sync এখনো সংযুক্ত নয়—MongoDB setup পরের ধাপ।</div>
+  <div class="prototype-note"></div>
 
   <!-- SETUP VIEW -->
   <div class="view active" id="view-setup">
@@ -402,22 +401,12 @@ async function registerUser(){const u=rgUser.value.trim().toLowerCase(),a=accs()
   const first=!Object.keys(a).length;a[u]=await hp(rgPin.value);localStorage.setItem(ACC,JSON.stringify(a));currentUser=u;sessionStorage.setItem('bh_user',u);
   if(first)[STORE_KEY,HISTORY_KEY,DRAFTS_KEY].forEach(k=>{const v=localStorage.getItem(k);if(v!==null)localStorage.setItem(uk(k),v)});enterApp()}
 function logoutUser(){sessionStorage.removeItem('bh_user');location.reload()}
-function migrateLegacyData(){
-  [STORE_KEY,HISTORY_KEY,DRAFTS_KEY,LOG_KEY].forEach(k=>{
-    const scoped=uk(k), existing=localStorage.getItem(scoped), legacy=localStorage.getItem(k);
-    if((existing===null || existing==='[]' || existing==='{}') && legacy!==null && legacy!=='[]' && legacy!=='{}') localStorage.setItem(scoped,legacy);
-  });
-}
-function enterApp(){migrateLegacyData();document.getElementById('loginOverlay').style.display='none';document.body.classList.remove('locked');userChip.textContent='👤 '+currentUser;initProfile();meters=loadMeters();
-  // Recover meter definitions from saved history if the setup key was lost during an older version update.
-  if(!meters.length){const hs=loadHistory().slice().sort((a,b)=>a.ym<b.ym?1:-1);if(hs.length){const latest=hs[0];meters=(latest.meters||[]).map(m=>({id:m.id,name:m.name,subs:(m.subs||[]).map(x=>({id:x.id,label:x.label,name:x.name||''}))}));if(meters.length)saveMeters(meters);}}
-  renderSetupView();renderCalcView();renderHistoryView()}
-
+function enterApp(){document.getElementById('loginOverlay').style.display='none';document.body.classList.remove('locked');userChip.textContent='👤 '+currentUser;initProfile();meters=loadMeters();renderSetupView();renderCalcView();renderHistoryView()}
 function fmtDate(i){const d=new Date(i);return d.toLocaleDateString('bn-BD',{day:'numeric',month:'long',year:'numeric'})+', '+d.toLocaleTimeString('bn-BD',{hour:'2-digit',minute:'2-digit'})}
 
 function loadMeters(){ try{ return JSON.parse(localStorage.getItem(uk(STORE_KEY))) || []; }catch(e){ return []; } }
 function saveMeters(m){ localStorage.setItem(uk(STORE_KEY), JSON.stringify(m)); }
-function loadHistory(){ try{ const h=JSON.parse(localStorage.getItem(uk(HISTORY_KEY)))||[]; return Array.isArray(h)?h.filter(x=>x&&x.ym&&Array.isArray(x.meters)).map(x=>({...x,meters:x.meters.map(m=>({...m,subs:Array.isArray(m.subs)?m.subs:[]}))})):[]; }catch(e){ return []; } }
+function loadHistory(){ try{ return JSON.parse(localStorage.getItem(uk(HISTORY_KEY))) || []; }catch(e){ return []; } }
 function saveHistory(h){ localStorage.setItem(uk(HISTORY_KEY), JSON.stringify(h)); }
 function loadDrafts(){ try{ return JSON.parse(localStorage.getItem(uk(DRAFTS_KEY))) || {}; }catch(e){ return {}; } }
 function saveDrafts(d){ localStorage.setItem(uk(DRAFTS_KEY), JSON.stringify(d)); }
@@ -425,10 +414,11 @@ const LOG_KEY='billApp_meterlog_v1';
 function loadLog(){try{return JSON.parse(localStorage.getItem(uk(LOG_KEY)))||[]}catch(e){return []}}
 function saveLog(l){localStorage.setItem(uk(LOG_KEY),JSON.stringify(l))}
 function histBefore(mid,sid,ym){return loadHistory().filter(h=>h.ym<ym).sort((a,b)=>a.ym<b.ym?1:-1).flatMap(r=>{const m=r.meters.find(x=>x.id===mid);const q=m&&m.subs.find(x=>x.id===sid);return q?[{ym:r.ym,s:q}]:[]})}
+function getPreviousMonthUnits(mid,sid,ym){const a=histBefore(mid,sid,ym);const rec=a.find(x=>Number.isFinite(Number(x.s.units)));return rec?{units:Math.max(0,Number(rec.s.units)||0),ym:rec.ym}:null}
 function getAvgUnits(mid,sid,ym){const a=histBefore(mid,sid,ym).slice(0,3).filter(x=>x.s.units>0);return a.length?{avg:a.reduce((t,x)=>t+x.s.units,0)/a.length,n:a.length}:null}
 function getLastReadingInfo(mid,sid,ym){const a=histBefore(mid,sid,ym).find(x=>x.s.curr!=null);return a?{reading:a.s.curr,ym:a.ym}:null}
 function askConfirm(msg,yes){const o=document.createElement('div');o.className='modal-overlay active';o.innerHTML='<div class="modal" style="max-width:420px"><h3>মিটার ডিলিট</h3><p class="sub" style="margin:10px 0 0;line-height:1.65">'+msg+'</p><div class="modal-actions"><button class="btn btn-ghost" id="cNo">না</button><button class="btn btn-primary" id="cYes" style="background:var(--warn)">হ্যাঁ, ডিলিট করুন</button></div></div>';document.body.appendChild(o);o.querySelector('#cNo').onclick=()=>o.remove();o.querySelector('#cYes').onclick=()=>{o.remove();yes()}}
-function replNote(s){const r=s.replacement;if(!r)return'';return '<div class="repl-note">🔁 মিটার বদল — পুরনো মিটার'+(r.oldNumber?' ('+escapeHtml(r.oldNumber)+')':'')+' শেষ রিডিং <b>'+(r.lastReading!=null?r.lastReading:'—')+'</b>'+(r.lastReadingYm?' ('+formatMonthLabel(r.lastReadingYm)+')':'')+', নতুন মিটার'+(r.newNumber&&r.newNumber!==r.oldNumber?' ('+escapeHtml(r.newNumber)+')':'')+' '+s.prev+'→'+s.curr+' = '+r.measuredUnits+' ইউনিট + গড় '+r.avgUnits+'-এর বাকি '+r.extraUnits+'</div>'}
+function replNote(s){const r=s.replacement;if(!r)return'';return '<div class="repl-note">🔁 মিটার বদল — পুরনো মিটার'+(r.oldNumber?' ('+escapeHtml(r.oldNumber)+')':'')+' শেষ রিডিং <b>'+(r.lastReading!=null?r.lastReading:'—')+'</b>'+(r.lastReadingYm?' ('+formatMonthLabel(r.lastReadingYm)+')':'')+', নতুন মিটার'+(r.newNumber&&r.newNumber!==r.oldNumber?' ('+escapeHtml(r.newNumber)+')':'')+' '+s.prev+'→'+s.curr+' = '+r.measuredUnits+' ইউনিট + আগের মাসের ইউনিট সমন্বয় '+r.extraUnits+'</div>'}
 
 let meters = loadMeters();
 function uid(){ return 'm' + Math.random().toString(36).slice(2,9); }
@@ -599,11 +589,15 @@ function computeMeterBreakdown(meter, totalBillRaw, meterChargeRaw, subsReadings
     if(prev!==null && curr!==null){ units = curr - prev; if(units < 0){ warning = 'negative'; units = 0; } }
     else if(curr!==null && prev===null){ warning = 'missing-prev'; }
     if(r.replaced){
-      const measured = units, av = getAvgUnits(meter.id, sub.id, calcMonthInput.value);
-      const avg = av ? Math.round(av.avg*100)/100 : 0;
-      const ex = Math.max(0, Math.round((avg - measured)*100)/100);
+      // Meter replacement rollover: preserve at least the previous month's billed units.
+      // Example: previous month 56 units, new meter 0→27 = 27 measured;
+      // add 29 rollover units so this month's billed usage remains 56.
+      const measured = units;
+      const prevMonth = getPreviousMonthUnits(meter.id, sub.id, calcMonthInput.value);
+      const baseline = prevMonth ? prevMonth.units : 0;
+      const ex = Math.max(0, Math.round((baseline - measured)*100)/100);
       units = measured + ex;
-      extra = { replaced:true, measuredUnits:measured, extraUnits:ex, avgUnits:avg };
+      extra = { replaced:true, measuredUnits:measured, extraUnits:ex, avgUnits:baseline, previousMonthUnits:baseline, previousMonthYm:prevMonth?prevMonth.ym:null };
     }
     totalUnits += units;
     return { id:sub.id, label:sub.label, name:sub.name, prev, curr, units, warning, ...extra };
@@ -648,22 +642,20 @@ function getArrearsForSub(meterId, subId, beforeYm){
   return { total, months };
 }
 
-function findHistoryMeter(rec,meterId){
-  const current=meters.find(x=>x.id===meterId);
-  return (rec.meters||[]).find(mm=>mm.id===meterId) || (current?(rec.meters||[]).find(mm=>mm.name===current.name):null) || null;
-}
-function findHistorySub(histMeter,subId,meterId){
-  const currentMeter=meters.find(x=>x.id===meterId), currentSub=currentMeter&&currentMeter.subs.find(x=>x.id===subId);
-  return (histMeter.subs||[]).find(ss=>ss.id===subId) || (currentSub?(histMeter.subs||[]).find(ss=>ss.label===currentSub.label):null) || null;
-}
 function getPrevReadingFromHistory(meterId, subId, ym){
-  const history=loadHistory().filter(h=>h.ym<ym).sort((a,b)=>a.ym<b.ym?1:-1);
-  for(const rec of history){const m=findHistoryMeter(rec,meterId);if(!m)continue;const sub=findHistorySub(m,subId,meterId);if(sub&&sub.curr!==null&&sub.curr!==undefined&&sub.curr!=='')return sub.curr;}
+  const history = loadHistory().filter(h=>h.ym < ym).sort((a,b)=> a.ym < b.ym ? 1 : -1);
+  for(const rec of history){
+    const m = rec.meters.find(mm=>mm.id===meterId);
+    if(m){
+      const s = m.subs.find(ss=>ss.id===subId);
+      if(s && s.curr!==null && s.curr!==undefined) return s.curr;
+    }
+  }
   return null;
 }
 
 /* ---------------- CALC VIEW ---------------- */
-function loadDraftForMonth(){ renderCalcView(); toast('মাসের তথ্য লোড হয়েছে'); }
+function loadDraftForMonth(){ renderCalcView(); }
 
 function getDraftForMonth(ym){
   const drafts = loadDrafts();
@@ -704,8 +696,8 @@ function renderCalcView(){
       if(isRepl && (d.prev===undefined || d.prev==='' || d.prev===null)){ prevVal = '0'; autoFilled = false; }
       let replRow = '';
       if(isRepl){
-        const li = getLastReadingInfo(meter.id, sub.id, ym), av = getAvgUnits(meter.id, sub.id, ym);
-        replRow = `<tr class="repl-row"><td colspan="4">পুরনো মিটারের শেষ রিডিং: <b>${li ? li.reading : '—'}</b>${li ? ' ('+formatMonthLabel(li.ym)+')' : ''} · ${av ? 'গত '+av.n+' মাসের গড় <b>'+av.avg.toFixed(2)+'</b> ইউনিট — নতুন মিটারের ইউনিট এর চেয়ে কম হলে বাকিটা যোগ হবে' : 'গড় ধরার মতো আগের তথ্য নেই'}<br><input type="text" class="newNoInput" data-meter="${meter.id}" data-sub="${sub.id}" value="${escapeHtml(d.newNo||'')}" placeholder="নতুন মিটার নম্বর (একই হলে ফাঁকা রাখুন)"></td></tr>`;
+        const li = getLastReadingInfo(meter.id, sub.id, ym), prevUnits = getPreviousMonthUnits(meter.id, sub.id, ym);
+        replRow = `<tr class="repl-row"><td colspan="4">পুরনো মিটারের শেষ রিডিং: <b>${li ? li.reading : '—'}</b>${li ? ' ('+formatMonthLabel(li.ym)+')' : ''} · ${prevUnits ? 'আগের মাসে ব্যবহার <b>'+prevUnits.units.toFixed(2)+'</b> ইউনিট — নতুন মিটারের ব্যবহার এর কম হলে পার্থক্য যোগ হবে' : 'আগের মাসের ইউনিটের তথ্য নেই; অতিরিক্ত ইউনিট যোগ হবে না'}<br><input type="text" class="newNoInput" data-meter="${meter.id}" data-sub="${sub.id}" value="${escapeHtml(d.newNo||'')}" placeholder="নতুন মিটার নম্বর (একই হলে ফাঁকা রাখুন)"></td></tr>`;
       }
       readingRows += `
         <tr>
@@ -893,7 +885,7 @@ function saveMonth(){
       if(s.replaced){
         const last = getLastReadingInfo(meter.id, s.id, ym);
         const oldNo = existingSub && existingSub.replacement ? existingSub.replacement.oldNumber : (subDef.meterNumber||'');
-        replacement = { oldNumber:oldNo, newNumber: rd.newNo || oldNo, lastReading: last?last.reading:null, lastReadingYm: last?last.ym:null, newStart:s.prev, measuredUnits:s.measuredUnits, extraUnits:s.extraUnits, avgUnits:s.avgUnits, savedAt:new Date().toISOString() };
+        replacement = { oldNumber:oldNo, newNumber: rd.newNo || oldNo, lastReading: last?last.reading:null, lastReadingYm: last?last.ym:null, newStart:s.prev, measuredUnits:s.measuredUnits, extraUnits:s.extraUnits, avgUnits:s.avgUnits, previousMonthUnits:s.previousMonthUnits, previousMonthYm:s.previousMonthYm, savedAt:new Date().toISOString() };
         if(rd.newNo && rd.newNo!==subDef.meterNumber){ subDef.meterNumber = rd.newNo; saveMeters(meters); }
         const lg = loadLog().filter(e=>!(e.ym===ym&&e.meterId===meter.id&&e.subId===s.id));
         lg.push({ ym, meterId:meter.id, meterName:meter.name, subId:s.id, label:s.label, holder:s.name||'', ...replacement }); saveLog(lg);
