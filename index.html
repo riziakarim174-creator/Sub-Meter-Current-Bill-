@@ -281,13 +281,27 @@
   .offline-save-row{display:flex;align-items:center;gap:10px;flex-wrap:wrap}
   @media(max-width:560px){.profile-trigger-text{display:none}.profile-trigger{padding:5px}.profile-panel{right:-4px}.topbar{gap:8px}}
 
+  .lang-switch{display:flex;gap:4px;justify-content:flex-end;margin-bottom:14px}
+  .lang-btn{border:1px solid var(--line);background:#fff;border-radius:999px;padding:5px 14px;font-size:12px;font-weight:700;cursor:pointer;color:var(--muted);font-family:inherit}
+  .lang-btn.active{background:var(--brass);border-color:var(--brass);color:#fff}
+  .meter-block.green{background:#ecfdf5;border:1px solid #a7f3d0;border-left:5px solid #059669}
+  .meter-block.green .meter-head{cursor:pointer;margin-bottom:0}.meter-block.green.open .meter-head{margin-bottom:12px}
+  .meter-block.green .tag{background:#059669;color:#fff}.meter-block.green .sub-row{background:#fff;flex-wrap:wrap}.meter-block.green .sub-row input{flex:1;min-width:120px}
+  .chev{font-size:11px;color:#047857}
+  .mode-switch{display:flex;align-items:center;gap:6px;margin-bottom:14px;flex-wrap:wrap}
+  .mode-btn{border:1px solid var(--line);background:#fff;border-radius:999px;padding:7px 16px;font-size:13px;font-weight:700;color:var(--muted);cursor:pointer;font-family:inherit}
+  .mode-btn.active{background:var(--brass);border-color:var(--brass);color:#fff}
+  #view-calc.reading-mode .bill-part,#view-calc.reading-mode #saveBar{display:none!important}
+  .last-read{font-size:11px;font-weight:700;color:#047857;background:#d1fae5;border-radius:6px;padding:4px 8px;white-space:nowrap}
+  .dc-row{display:flex;align-items:center;gap:10px;margin-bottom:10px;flex-wrap:wrap}.dc-row label{margin:0}.dc-row input{width:130px}
 </style>
 </head>
 <body class="locked">
 <div class="login-overlay" id="loginOverlay">
   <div class="login-side"><div class="brand"><div class="brand-mark"><svg viewBox="0 0 24 24" fill="none"><path d="M13 2L4 14h6l-1 8 9-12h-6l1-8z" fill="#fff"/></svg></div><h1>বিদ্যুৎ বিল হিসাব</h1></div>
-    </ul></div>
+    <h2>বাড়িভাড়ার বিদ্যুৎ বিল, এক জায়গায় পরিষ্কার হিসাব</h2></div>
   <div class="login-box">
+    <div class="lang-switch"><button class="lang-btn" data-l="bn" onclick="setAppLanguage('bn')">বাংলা</button><button class="lang-btn" data-l="en" onclick="setAppLanguage('en')">English</button></div>
     <div id="loginForm"><h3>লগইন</h3><p class="hint">Username ও PIN দিয়ে প্রবেশ করুন</p>
       <label>Username</label><input id="lgUser" autocomplete="username"><label>PIN</label><input id="lgPin" type="password" inputmode="numeric" maxlength="8" autocomplete="current-password" onkeydown="if(event.key==='Enter')loginUser()">
       <button class="btn btn-primary" style="width:100%;margin-top:16px;justify-content:center" onclick="loginUser()">লগইন</button>
@@ -301,11 +315,10 @@
 </div>
 
 
-<header class="topbar"><div class="brand"><div class="brand-mark"><svg viewBox="0 0 24 24" fill="none"><path d="M13 2L4 14h6l-1 8 9-12h-6l1-8z" fill="#fff"/></svg></div><h1>বিদ্যুৎ বিল হিসাব</h1></div><div class="topbar-right"><span class="month-pill" id="currentMonthPill">—</span><div class="profile-wrap"><button class="profile-trigger" id="profileTrigger" onclick="toggleProfile()"><span class="profile-avatar" id="profileAvatar">U</span><span class="profile-trigger-text"><b id="profileName">Profile</b><small>My account · ⋮</small></span><span aria-hidden="true">⋮</span></button><div class="profile-panel" id="profilePanel"><div class="profile-head"><span class="profile-avatar" id="profileAvatarLarge">U</span><div><b id="profileNameLarge">User</b><small id="profileIdLabel">Local account</small></div></div><div class="offline-status"><span class="offline-dot"></span><span id="offlineStatusText">Offline-ready · এই ডিভাইসে সেভ হবে</span></div><div class="profile-tools"><label for="languageSelect" style="margin:0">ভাষা / Language</label><select id="languageSelect" onchange="setAppLanguage(this.value)"><option value="bn">বাংলা</option><option value="en">English</option></select></div><div class="profile-nav-section"><div class="profile-nav-title" id="navTitle">মেনু / Menu</div><div class="nav-menu" id="navMenu"><div class="tab active" data-view="setup">মিটার সেটআপ</div><div class="tab" data-view="calc">এই মাসের হিসাব</div><div class="tab" data-view="history">হিস্ট্রি / ব্যাকআপ</div></div></div><button class="btn btn-ghost profile-logout" onclick="logoutUser()">লগআউট / Log out</button></div></div></div></header>
+<header class="topbar"><div class="brand"><div class="brand-mark"><svg viewBox="0 0 24 24" fill="none"><path d="M13 2L4 14h6l-1 8 9-12h-6l1-8z" fill="#fff"/></svg></div><h1>বিদ্যুৎ বিল হিসাব</h1></div><div class="topbar-right"><span class="month-pill" id="currentMonthPill">—</span><div class="profile-wrap"><button class="profile-trigger" id="profileTrigger" onclick="toggleProfile()"><span class="profile-avatar" id="profileAvatar">U</span><span class="profile-trigger-text"><b id="profileName">Profile</b></span><span aria-hidden="true">⋮</span></button><div class="profile-panel" id="profilePanel"><div class="profile-head"><span class="profile-avatar" id="profileAvatarLarge">U</span><div><b id="profileNameLarge">User</b></div></div><div class="profile-tools"><label for="languageSelect" style="margin:0">ভাষা / Language</label><select id="languageSelect" onchange="setAppLanguage(this.value)"><option value="bn">বাংলা</option><option value="en">English</option></select></div><div class="profile-nav-section"><div class="profile-nav-title" id="navTitle">মেনু / Menu</div><div class="nav-menu" id="navMenu"><div class="tab active" data-view="setup">মিটার সেটআপ</div><div class="tab" data-view="calc">এই মাসের হিসাব</div><div class="tab" data-view="history">হিস্ট্রি / ব্যাকআপ</div></div></div><button class="btn btn-ghost profile-logout" onclick="logoutUser()">লগআউট / Log out</button></div></div></div></header>
 <div class="wrap">
 
-  <div class="prototype-note"></div>
-
+  
   <!-- SETUP VIEW -->
   <div class="view active" id="view-setup">
     <div class="card">
@@ -342,17 +355,17 @@
           <button class="btn btn-ghost" style="width:100%;" onclick="loadDraftForMonth()">লোড / এডিট</button>
         </div>
       </div>
-      <p class="field-note">আগে সেভ করা যেকোনো মাস নির্বাচন করে “লোড / এডিট” চাপলে পুরোনো ইনপুট বদলাতে পারবে। ইনপুট পরিবর্তন হলেই ড্রাফট এই ডিভাইসে অটো-সেভ হবে—ইন্টারনেট লাগবে না।</p>
-    </div>
+          </div>
 
-    <div id="calcMetersContainer"></div>
+    <div class="mode-switch"><button class="mode-btn" data-mode="reading" onclick="setCalcMode('reading')">রিডিং এন্ট্রি</button><button class="mode-btn" data-mode="bill" onclick="setCalcMode('bill')">পূর্ণ হিসাব</button><span class="draft-status" id="draftStatus"></span></div>
+<div id="calcMetersContainer"></div>
 
     <div class="card" id="calcEmpty" style="display:none;">
       <p class="sub" style="margin:0;">আগে "মিটার সেটআপ" ট্যাবে গিয়ে অন্তত একটা মিটার ও সাব-মিটার যোগ করুন।</p>
     </div>
 
     <div class="card" id="saveBar" style="display:none;">
-      <div class="offline-save-row"><button class="btn btn-ghost" onclick="saveDraftOffline()">⬇ ড্রাফট অফলাইনে সেভ করুন</button><button class="btn btn-primary" onclick="saveMonth()">✓ এই মাসের হিসাব সেভ করুন</button><span class="draft-status" id="draftStatus">অটো-সেভ চালু</span></div>
+      <div class="offline-save-row"><button class="btn btn-ghost" onclick="saveDraftOffline()">⬇ ড্রাফট অফলাইনে সেভ করুন</button><button class="btn btn-primary" onclick="saveMonth()">✓ এই মাসের হিসাব সেভ করুন</button></div>
     </div>
   </div>
 
@@ -417,7 +430,7 @@ function histBefore(mid,sid,ym){return loadHistory().filter(h=>h.ym<ym).sort((a,
 function getPreviousMonthUnits(mid,sid,ym){const a=histBefore(mid,sid,ym);const rec=a.find(x=>Number.isFinite(Number(x.s.units)));return rec?{units:Math.max(0,Number(rec.s.units)||0),ym:rec.ym}:null}
 function getAvgUnits(mid,sid,ym){const a=histBefore(mid,sid,ym).slice(0,3).filter(x=>x.s.units>0);return a.length?{avg:a.reduce((t,x)=>t+x.s.units,0)/a.length,n:a.length}:null}
 function getLastReadingInfo(mid,sid,ym){const a=histBefore(mid,sid,ym).find(x=>x.s.curr!=null);return a?{reading:a.s.curr,ym:a.ym}:null}
-function askConfirm(msg,yes){const o=document.createElement('div');o.className='modal-overlay active';o.innerHTML='<div class="modal" style="max-width:420px"><h3>মিটার ডিলিট</h3><p class="sub" style="margin:10px 0 0;line-height:1.65">'+msg+'</p><div class="modal-actions"><button class="btn btn-ghost" id="cNo">না</button><button class="btn btn-primary" id="cYes" style="background:var(--warn)">হ্যাঁ, ডিলিট করুন</button></div></div>';document.body.appendChild(o);o.querySelector('#cNo').onclick=()=>o.remove();o.querySelector('#cYes').onclick=()=>{o.remove();yes()}}
+function askConfirm(msg,yes){const o=document.createElement('div');o.className='modal-overlay active';o.innerHTML='<div class="modal" style="max-width:420px"><h3>মিটার ডিলিট</h3><p class="sub" style="margin:10px 0 0;line-height:1.65">'+msg+'</p><div class="modal-actions"><button class="btn btn-ghost" id="cNo">না / No</button><button class="btn btn-primary" id="cYes" style="background:var(--warn)">হ্যাঁ, ডিলিট করুন</button></div></div>';document.body.appendChild(o);o.querySelector('#cNo').onclick=()=>o.remove();o.querySelector('#cYes').onclick=()=>{o.remove();yes()}}
 function replNote(s){const r=s.replacement;if(!r)return'';return '<div class="repl-note">🔁 মিটার বদল — পুরনো মিটার'+(r.oldNumber?' ('+escapeHtml(r.oldNumber)+')':'')+' শেষ রিডিং <b>'+(r.lastReading!=null?r.lastReading:'—')+'</b>'+(r.lastReadingYm?' ('+formatMonthLabel(r.lastReadingYm)+')':'')+', নতুন মিটার'+(r.newNumber&&r.newNumber!==r.oldNumber?' ('+escapeHtml(r.newNumber)+')':'')+' '+s.prev+'→'+s.curr+' = '+r.measuredUnits+' ইউনিট + আগের মাসের ইউনিট সমন্বয় '+r.extraUnits+'</div>'}
 
 let meters = loadMeters();
@@ -471,7 +484,7 @@ function addMeter(){
   const input = document.getElementById('newMeterName');
   const name = input.value.trim();
   if(!name){ toast('মিটারের নাম লিখুন'); return; }
-  meters.push({ id: uid(), name, subs: [] });
+  const nm = { id: uid(), name, demandCharge: 136, subs: [] }; meters.push(nm); openMeters.add(nm.id);
   saveMeters(meters);
   input.value = '';
   renderSetupView();
@@ -494,7 +507,7 @@ function nextSubLetter(meter){
   for(const l of letters){ if(!used.includes(l)) return l; }
   return String(meter.subs.length + 1);
 }
-function addSub(meterId){
+function addSub(meterId){ openMeters.add(meterId);
   const meter = meters.find(m=>m.id===meterId);
   const label = nextSubLetter(meter);
   meter.subs.push({ id: uid(), label, name: '' });
@@ -518,47 +531,59 @@ function updateSubName(meterId, subId, val){
   sub.name = val;
   saveMeters(meters);
 }
+const openMeters = new Set();
+function toggleMeterOpen(id){ openMeters.has(id) ? openMeters.delete(id) : openMeters.add(id); renderSetupView(); }
+function updateSubField(mid,sid,f,v){ const m=meters.find(x=>x.id===mid), q=m&&m.subs.find(x=>x.id===sid); if(q){ q[f]=v; saveMeters(meters); } }
 function renderSetupView(){
   const container = document.getElementById('metersContainer');
   const empty = document.getElementById('setupEmpty');
   container.innerHTML = '';
   if(meters.length === 0){ empty.style.display='block'; return; }
   empty.style.display='none';
-
   meters.forEach(meter=>{
+    const open = openMeters.has(meter.id);
     const block = document.createElement('div');
-    block.className = 'meter-block';
-    block.innerHTML = `
-      <div class="meter-head">
-        <div class="meter-name">
-          <input type="text" style="width:140px; font-family:var(--mono); font-weight:700;" value="${escapeHtml(meter.name)}" onchange="updateMeterName('${meter.id}', this.value)">
-          <span class="tag">${meter.subs.length} সাব-মিটার</span>
-        </div>
-        <button class="icon-btn" title="মিটার ডিলিট" onclick="deleteMeter('${meter.id}')">
-          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M3 6h18"/><path d="M8 6V4a2 2 0 012-2h4a2 2 0 012 2v2m3 0l-1 14a2 2 0 01-2 2H8a2 2 0 01-2-2L5 6"/></svg>
-        </button>
-      </div>
-      <div class="sub-list" id="subs-${meter.id}"></div>
-      <div class="add-link" onclick="addSub('${meter.id}')">+ সাব-মিটার যোগ করুন</div>
-    `;
-    container.appendChild(block);
-    const subList = block.querySelector(`#subs-${meter.id}`);
-    if(meter.subs.length === 0){
-      subList.innerHTML = `<p class="field-note" style="margin:0;">কোনো সাব-মিটার নেই।</p>`;
-    }
-    meter.subs.forEach(sub=>{
-      const row = document.createElement('div');
-      row.className = 'sub-row';
-      row.innerHTML = `
+    block.className = 'meter-block green' + (open ? ' open' : '');
+    let subsHtml = '';
+    if(open){
+      subsHtml = '<div class="dc-row"><label>ডিমান্ড চার্জ (প্রতি সাব-মিটার, টাকা)</label><input type="number" min="0" step="0.01" value="'+meterDemandDefault(meter)+'" onchange="updateMeterField(\''+meter.id+'\',\'demandCharge\',this.value)"></div><div class="sub-list">' + meter.subs.map(sub=>`<div class="sub-row">
         <span class="letter">${sub.label}</span>
-        <input type="text" placeholder="ভাড়াটিয়া / ফ্ল্যাটের নাম (ঐচ্ছিক)" value="${escapeHtml(sub.name)}" onchange="updateSubName('${meter.id}','${sub.id}', this.value)">
-        <button class="icon-btn" title="ডিলিট" onclick="deleteSub('${meter.id}','${sub.id}')">
-          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M18 6L6 18M6 6l12 12"/></svg>
-        </button>
-      `;
-      subList.appendChild(row);
-    });
+        <input type="text" placeholder="ভাড়াটিয়ার নাম" value="${escapeHtml(sub.name||'')}" onchange="updateSubField('${meter.id}','${sub.id}','name',this.value)">
+        <input type="tel" placeholder="মোবাইল নম্বর" value="${escapeHtml(sub.mobile||'')}" onchange="updateSubField('${meter.id}','${sub.id}','mobile',this.value)">
+        <input type="text" placeholder="সাব-মিটার নম্বর" value="${escapeHtml(sub.meterNumber||'')}" onchange="updateSubField('${meter.id}','${sub.id}','meterNumber',this.value)">
+        <input type="number" step="0.01" placeholder="শুরুর রিডিং" value="${escapeHtml(sub.initReading||'')}" onchange="updateSubField('${meter.id}','${sub.id}','initReading',this.value)">
+        ${(()=>{ const l=getPrevReadingFromHistory(meter.id, sub.id, '9999-12'); return l!==null ? '<span class="last-read">শেষ রিডিং: '+l+'</span>' : ''; })()}
+        <button class="btn btn-ghost btn-sm" onclick="openSubHistory('${meter.id}','${sub.id}')">হিস্ট্রি</button>
+        <button class="icon-btn" title="ডিলিট" onclick="deleteSub('${meter.id}','${sub.id}')"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M18 6L6 18M6 6l12 12"/></svg></button>
+      </div>`).join('') + `</div><div class="add-link" onclick="addSub('${meter.id}')">+ সাব-মিটার যোগ করুন</div>`;
+    }
+    block.innerHTML = `<div class="meter-head" onclick="toggleMeterOpen('${meter.id}')">
+        <div class="meter-name"><input type="text" style="width:140px;font-weight:700;" value="${escapeHtml(meter.name)}" onclick="event.stopPropagation()" onchange="updateMeterName('${meter.id}', this.value)"><span class="tag">${meter.subs.length} সাব-মিটার</span></div>
+        <div style="display:flex;align-items:center;gap:8px"><button class="icon-btn" title="মিটার ডিলিট" onclick="event.stopPropagation();deleteMeter('${meter.id}')"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M3 6h18"/><path d="M8 6V4a2 2 0 012-2h4a2 2 0 012 2v2m3 0l-1 14a2 2 0 01-2 2H8a2 2 0 01-2-2L5 6"/></svg></button><span class="chev">${open?'▲':'▼'}</span></div>
+      </div>${subsHtml}`;
+    container.appendChild(block);
   });
+}
+
+/* ---------- sub-meter history ---------- */
+let subCtx = null;
+function afterPay(rec){ if(subCtx){ const c=subCtx; subCtx=null; openSubHistory(c.mid,c.sid); } else if(rec){ openDetailModal(rec); } }
+function payFromSub(ym,mid,sid){ subCtx={mid,sid}; togglePaid(ym,mid,sid); subCtx=null; }
+function openSubHistory(mid,sid){
+  const meter = meters.find(m=>m.id===mid), sub = meter && meter.subs.find(x=>x.id===sid); if(!sub) return;
+  const rows = loadHistory().slice().sort((a,b)=>b.ym.localeCompare(a.ym)).flatMap(r=>{ const m=r.meters.find(x=>x.id===mid), q=m&&m.subs.find(x=>x.id===sid); return q?[{ym:r.ym,s:q}]:[]; });
+  const due = rows.filter(x=>!x.s.paid).reduce((a,x)=>a+x.s.total,0), paid = rows.filter(x=>x.s.paid).reduce((a,x)=>a+x.s.total,0);
+  const body = rows.map(({ym,s})=>{
+    const ar = s.paid ? {total:0,months:[]} : getArrearsForSub(mid,sid,ym), pay = s.paid ? 0 : s.total + ar.total;
+    return `<tr class="${s.paid?'row-paid':''}"><td>${formatMonthLabel(ym)}</td><td class="num">${(s.units||0).toFixed(2)}</td><td class="num">৳${s.total.toFixed(2)}</td>
+      <td class="num">${s.paid ? '—' : '<b>৳'+pay.toFixed(2)+'</b>'+(ar.total>0.005 ? '<div class="arrears-note">+ ৳'+ar.total.toFixed(2)+' ('+ar.months.map(a=>formatMonthLabel(a.ym)).join(', ')+')</div>' : '')}</td>
+      <td><button class="pay-pill ${s.paid?'paid':'unpaid'}" onclick="payFromSub('${ym}','${mid}','${sid}')">${s.paid?'✓ পরিশোধিত':'বাকি'}</button>${s.paid&&s.paidAt ? '<div class="paid-on">✓ '+fmtDate(s.paidAt)+'</div>' : ''}</td></tr>`;
+  }).join('');
+  document.getElementById('detailModalContent').innerHTML = `<h3>${escapeHtml(meter.name)} · ${sub.label}${sub.name?' — '+escapeHtml(sub.name):''}</h3><p class="sub">${escapeHtml(sub.meterNumber||'—')}${sub.mobile?' · '+escapeHtml(sub.mobile):''}</p>
+    <div class="summary-stats"><div class="stat"><div class="k">মোট বাকি</div><div class="v" style="color:${due>0.005?'var(--warn)':'var(--volt)'}">৳${due.toFixed(2)}</div></div><div class="stat"><div class="k">পরিশোধিত</div><div class="v" style="color:var(--volt)">৳${paid.toFixed(2)}</div></div></div>`
+    + (rows.length ? `<table><thead><tr><th>বিল মাস</th><th class="num">ইউনিট</th><th class="num">এই মাসের বিল</th><th class="num">বাকি</th><th>স্ট্যাটাস</th></tr></thead><tbody>${body}</tbody></table>` : '<p class="sub">কোনো হিস্ট্রি নেই</p>');
+  document.querySelector('#detailModal .modal').style.maxWidth = '680px';
+  document.getElementById('detailModal').classList.add('active');
 }
 
 /* ---------------- CORE CALCULATION (shared by live view + save) ---------------- */
@@ -643,15 +668,29 @@ function getArrearsForSub(meterId, subId, beforeYm){
 }
 
 function getPrevReadingFromHistory(meterId, subId, ym){
-  const history = loadHistory().filter(h=>h.ym < ym).sort((a,b)=> a.ym < b.ym ? 1 : -1);
-  for(const rec of history){
-    const m = rec.meters.find(mm=>mm.id===meterId);
-    if(m){
-      const s = m.subs.find(ss=>ss.id===subId);
-      if(s && s.curr!==null && s.curr!==undefined) return s.curr;
-    }
-  }
+  let best = null;
+  loadHistory().forEach(rec=>{
+    if(rec.ym >= ym) return;
+    const m = rec.meters.find(x=>x.id===meterId), q = m && m.subs.find(x=>x.id===subId);
+    if(q && q.curr!==null && q.curr!==undefined && (!best || rec.ym > best.ym)) best = { ym:rec.ym, v:q.curr };
+  });
+  const drafts = loadDrafts();
+  Object.keys(drafts).forEach(dm=>{
+    if(dm >= ym || (best && dm <= best.ym)) return;
+    const d = drafts[dm] && drafts[dm][meterId], q = d && d.subs && d.subs[subId];
+    if(q && q.curr!=='' && q.curr!==null && q.curr!==undefined && !isNaN(parseFloat(q.curr))) best = { ym:dm, v:parseFloat(q.curr) };
+  });
+  if(best) return best.v;
+  const mt = meters.find(x=>x.id===meterId), sd = mt && mt.subs.find(x=>x.id===subId);
+  if(sd && sd.initReading!==undefined && sd.initReading!=='' && !isNaN(parseFloat(sd.initReading))) return parseFloat(sd.initReading);
   return null;
+}
+function meterDemandDefault(m){ return (m.demandCharge!==undefined && m.demandCharge!==null && m.demandCharge!=='') ? m.demandCharge : 136; }
+function chargeFor(m, ym){ const r=loadHistory().find(h=>h.ym===ym), x=r&&r.meters.find(k=>k.id===m.id); return (x && x.meterCharge>0) ? x.meterCharge : meterDemandDefault(m); }
+function updateMeterField(id,f,v){ const m=meters.find(x=>x.id===id); if(m){ m[f]=v; saveMeters(meters); } }
+function lastMeterCharge(mid, ym){
+  const r = loadHistory().filter(h=>h.ym<ym).sort((a,b)=>b.ym.localeCompare(a.ym)).map(h=>h.meters.find(m=>m.id===mid)).find(m=>m && m.meterCharge>0);
+  return r ? r.meterCharge : '';
 }
 
 /* ---------------- CALC VIEW ---------------- */
@@ -687,23 +726,22 @@ function renderCalcView(){
       const d = subsDraft[sub.id] || {};
       let prevVal = d.prev;
       let autoFilled = false;
-      if(prevVal === undefined || prevVal === '' || prevVal === null){
-        const hist = getPrevReadingFromHistory(meter.id, sub.id, ym);
-        if(hist !== null){ prevVal = hist; autoFilled = true; } else { prevVal = ''; }
-      }
+      const hist = getPrevReadingFromHistory(meter.id, sub.id, ym);
+      if(hist !== null && !d.prevManual && !d.replaced){ prevVal = hist; autoFilled = true; }
+      else if(prevVal === undefined || prevVal === null){ prevVal = ''; }
       const currVal = (d.curr!==undefined && d.curr!==null) ? d.curr : '';
       const isRepl = !!d.replaced;
       if(isRepl && (d.prev===undefined || d.prev==='' || d.prev===null)){ prevVal = '0'; autoFilled = false; }
       let replRow = '';
       if(isRepl){
         const li = getLastReadingInfo(meter.id, sub.id, ym), prevUnits = getPreviousMonthUnits(meter.id, sub.id, ym);
-        replRow = `<tr class="repl-row"><td colspan="4">পুরনো মিটারের শেষ রিডিং: <b>${li ? li.reading : '—'}</b>${li ? ' ('+formatMonthLabel(li.ym)+')' : ''} · ${prevUnits ? 'আগের মাসে ব্যবহার <b>'+prevUnits.units.toFixed(2)+'</b> ইউনিট — নতুন মিটারের ব্যবহার এর কম হলে পার্থক্য যোগ হবে' : 'আগের মাসের ইউনিটের তথ্য নেই; অতিরিক্ত ইউনিট যোগ হবে না'}<br><input type="text" class="newNoInput" data-meter="${meter.id}" data-sub="${sub.id}" value="${escapeHtml(d.newNo||'')}" placeholder="নতুন মিটার নম্বর (একই হলে ফাঁকা রাখুন)"></td></tr>`;
+        replRow = `<tr class="repl-row"><td colspan="4">পুরনো মিটারের শেষ রিডিং: <b>${li ? li.reading : '—'}</b>${li ? ' ('+formatMonthLabel(li.ym)+')' : ''} · ${prevUnits ? 'আগের মাসে ব্যবহার <b>'+prevUnits.units.toFixed(2)+'</b> ইউনিট' : ''}<br><input type="text" class="newNoInput" data-meter="${meter.id}" data-sub="${sub.id}" value="${escapeHtml(d.newNo||'')}" placeholder="নতুন মিটার নম্বর (একই হলে ফাঁকা রাখুন)"></td></tr>`;
       }
       readingRows += `
         <tr>
           <td><span style="font-weight:700; color:var(--brass-dark);">${sub.label}</span>${sub.name ? ' — '+escapeHtml(sub.name) : ''}<label class="repl-toggle"><input type="checkbox" class="replInput" data-meter="${meter.id}" data-sub="${sub.id}" ${isRepl?'checked':''}> মিটার বদল</label></td>
           <td style="width:110px;">
-            <input type="number" step="0.01" class="prevInput" data-meter="${meter.id}" data-sub="${sub.id}" value="${prevVal}" placeholder="${isRepl?'শুরু':'আগের'}">
+            <input type="number" step="0.01" class="prevInput" data-manual="${d.prevManual?'1':''}" data-meter="${meter.id}" data-sub="${sub.id}" value="${prevVal}" placeholder="${isRepl?'শুরু':'আগের'}">
             ${isRepl ? '<span class="auto-tag">নতুন মিটারের শুরু</span>' : (autoFilled ? '<span class="auto-tag">গত মাসের রিডিং</span>' : '')}
           </td>
           <td style="width:110px;">
@@ -719,14 +757,14 @@ function renderCalcView(){
         <span class="charge-note">${meter.subs.length}টি সাব-মিটার</span>
       </div>
       <div class="divider"></div>
-      <div class="row">
+      <div class="row bill-part">
         <div>
           <label>মোট বিল (টাকা)</label>
           <input type="number" min="0" step="0.01" class="totalBillInput" data-meter="${meter.id}" value="${md.totalBill ?? ''}" placeholder="যেমনঃ 5600">
         </div>
         <div>
           <label>মিটার চার্জ / ডিমান্ড চার্জ (টাকা)</label>
-          <input type="number" min="0" step="0.01" class="meterChargeInput" data-meter="${meter.id}" value="${md.meterCharge ?? ''}" placeholder="যেমনঃ 500">
+          <input type="number" min="0" step="0.01" class="meterChargeInput" data-meter="${meter.id}" value="${(md.meterCharge!==undefined && md.meterCharge!=='') ? md.meterCharge : chargeFor(meter, ym)}" placeholder="যেমনঃ 500">
         </div>
       </div>
 
@@ -738,14 +776,14 @@ function renderCalcView(){
       </table>
       ` : `<p class="field-note">এই মিটারের নিচে কোনো সাব-মিটার নেই। আগে "মিটার সেটআপ"-এ গিয়ে যোগ করুন।</p>`}
 
-      <div id="resultTable-${meter.id}"></div>
+      <div class="bill-part" id="resultTable-${meter.id}"></div>
     `;
     container.appendChild(card);
     card.querySelectorAll('.newNoInput').forEach(i=>i.addEventListener('input',autoSaveDraft));
-    card.querySelectorAll('.replInput').forEach(c=>c.addEventListener('change',()=>{const pi=card.querySelector(`.prevInput[data-sub="${c.dataset.sub}"]`);if(pi)pi.value=c.checked?'0':'';autoSaveDraft();renderCalcView();}));
+    card.querySelectorAll('.replInput').forEach(c=>c.addEventListener('change',()=>{const pi=card.querySelector(`.prevInput[data-sub="${c.dataset.sub}"]`);if(pi){pi.value=c.checked?'0':'';pi.dataset.manual='';}autoSaveDraft();renderCalcView();}));
 
     card.querySelectorAll('.totalBillInput, .meterChargeInput, .prevInput, .currInput').forEach(inp=>{
-      inp.addEventListener('input', ()=>{ autoSaveDraft(); computeAndRenderMeter(meter); });
+      inp.addEventListener('input', ()=>{ if(inp.classList.contains('prevInput')) inp.dataset.manual = inp.value==='' ? '' : '1'; autoSaveDraft(); computeAndRenderMeter(meter); });
     });
 
     computeAndRenderMeter(meter);
@@ -761,7 +799,7 @@ function readMeterInputsFromDOM(meter){
     const currInput = document.querySelector(`.currInput[data-meter="${meter.id}"][data-sub="${sub.id}"]`);
     const rc = document.querySelector(`.replInput[data-meter="${meter.id}"][data-sub="${sub.id}"]`);
     const nn = document.querySelector(`.newNoInput[data-meter="${meter.id}"][data-sub="${sub.id}"]`);
-    subsReadings[sub.id] = { prev: prevInput ? prevInput.value : '', curr: currInput ? currInput.value : '', replaced: !!(rc && rc.checked), newNo: nn ? nn.value.trim() : '' };
+    subsReadings[sub.id] = { prev: prevInput ? prevInput.value : '', curr: currInput ? currInput.value : '', prevManual: !!(prevInput && prevInput.dataset.manual==='1'), replaced: !!(rc && rc.checked), newNo: nn ? nn.value.trim() : '' };
   });
   return {
     totalBill: totalBillInput ? totalBillInput.value : '',
@@ -931,7 +969,7 @@ function togglePaid(ym, meterId, subId){
     s.settledArrears = null;
     saveHistory(history);
     renderHistoryView();
-    openDetailModal(rec);
+    afterPay(rec);
     toast('বাকি হিসেবে ফিরিয়ে নেওয়া হলো');
     return;
   }
@@ -965,7 +1003,7 @@ function togglePaid(ym, meterId, subId){
   saveHistory(history);
   renderHistoryView();
   const freshRec = loadHistory().find(h=>h.ym===ym);
-  if(freshRec) openDetailModal(freshRec);
+  afterPay(freshRec);
   toast(arrears.months.length
     ? `✓ ৳${grandTotal.toFixed(2)} পরিশোধিত (এই মাস + ${arrears.months.length}টি আগের বকেয়া)`
     : '✓ পরিশোধিত হিসেবে চিহ্নিত হলো');
@@ -1103,7 +1141,7 @@ function openDetailModal(rec){
   content.innerHTML = html;
   document.getElementById('detailModal').classList.add('active');
 }
-function closeDetailModal(){ document.getElementById('detailModal').classList.remove('active'); }
+function closeDetailModal(){ document.getElementById('detailModal').classList.remove('active'); document.querySelector('#detailModal .modal').style.maxWidth=''; }
 document.getElementById('detailModal').addEventListener('click', (e)=>{ if(e.target.id === 'detailModal') closeDetailModal(); });
 
 
@@ -1121,14 +1159,28 @@ const BN_EN={
 'বিদ্যুৎ বিল হিসাব':'Electricity Bill Calculator','বাড়িভাড়ার বিদ্যুৎ বিল, এক জায়গায় পরিষ্কার হিসাব':'Rental electricity bills, clearly organized in one place','মেইন মিটারের বিল থেকে প্রতিটি সাব-মিটার হোল্ডারের ভাগ নিজে নিজেই হিসাব হয়ে যায়।':'Each sub-meter holder’s share is calculated automatically from the main meter bill.','রিডিং দিলেই ইউনিট ও প্রতি ইউনিটের রেট বের হয়':'Enter readings to calculate units and the rate per unit','বকেয়া পরের মাসের বিলে অটো যোগ হয়':'Unpaid balances are automatically carried into the next month','কবে পরিশোধ হলো তার তারিখসহ পূর্ণ হিস্ট্রি':'Complete payment history with dates','ডেটা এই ব্রাউজারে সেভ থাকে; হিস্ট্রি ট্যাব থেকে ব্যাকআপ নেওয়া যায়':'Data is saved in this browser; you can back it up from History','লগইন':'Login','Username ও PIN দিয়ে প্রবেশ করুন':'Sign in with username and PIN','Username':'Username','PIN আবার':'Confirm PIN','নতুন অ্যাকাউন্ট':'Create account','Username ও ৪–৮ সংখ্যার PIN সেট করুন':'Set a username and a 4–8 digit PIN','তৈরি করুন':'Create account','লগইনে ফিরুন':'Back to login','Profile':'Profile','My account':'My account','Local account':'Local account','Offline-ready':'Offline-ready','এই ডিভাইসে সেভ হবে':'Saved on this device','ভাষা / Language':'Language','বাংলা':'Bangla','লগআউট / Log out':'Log out','লগআউট':'Log out','মিটার সেটআপ':'Meter setup','এই মাসের হিসাব':'This month’s calculation','হিস্ট্রি / ব্যাকআপ':'History / Backup','মেনু / Menu':'Menu','Prototype preview:':'Prototype preview:','ডেটা এই browser/device-এ local save হয়। Cloud sync এখনো সংযুক্ত নয়—MongoDB setup পরের ধাপ।':'Data is saved locally on this browser/device. Cloud sync is not connected yet; MongoDB setup comes next.','মেইন মিটার যোগ করুন':'Add main meter','মিটারের নাম':'Meter name','+ মিটার যোগ':'Add meter','মিটার যোগ':'Add meter','এখনো কোনো মিটার যোগ করা হয়নি। উপরে থেকে প্রথম মিটার যোগ করুন।':'No meter has been added yet. Add your first meter above.','মাস নির্বাচন করুন':'Select month','বিল মাস':'Bill month','লোড / এডিট':'Load / Edit','আগে সেভ করা যেকোনো মাস নির্বাচন করে “লোড / এডিট” চাপলে পুরোনো ইনপুট বদলাতে পারবে। ইনপুট পরিবর্তন হলেই ড্রাফট এই ডিভাইসে অটো-সেভ হবে—ইন্টারনেট লাগবে না।':'Select any previously saved month and press “Load / Edit” to change its entries. Drafts are automatically saved on this device whenever you edit; no internet is needed.','আগে "মিটার সেটআপ" ট্যাবে গিয়ে অন্তত একটা মিটার ও সাব-মিটার যোগ করুন।':'First add at least one meter and sub-meter in Meter Setup.','⬇ ড্রাফট অফলাইনে সেভ করুন':'⬇ Save draft offline','✓ এই মাসের হিসাব সেভ করুন':'✓ Save this month’s calculation','অটো-সেভ চালু':'Auto-save enabled','HISTORY VIEW':'HISTORY VIEW','⬇ ব্যাকআপ ডাউনলোড':'⬇ Download backup','⬆ ব্যাকআপ রিস্টোর':'⬆ Restore backup','এখনো কোনো মাসের হিসাব সেভ করা হয়নি।':'No monthly calculations have been saved yet.','বন্ধ করুন':'Close','মিটার:':'Meter:','সাব-মিটার':'Sub-meter','সাব-মিটার যোগ করুন':'Add sub-meter','মিটার ডিলিট':'Delete meter','ভাড়াটিয়া / ফ্ল্যাটের নাম (ঐচ্ছিক)':'Tenant / Flat name (optional)','মোট বিল (টাকা)':'Total bill (BDT)','মিটার চার্জ / ডিমান্ড চার্জ (টাকা)':'Meter / demand charge (BDT)','আগের রিডিং':'Previous reading','বর্তমান রিডিং':'Current reading','ইউনিট':'Units','ড্রাফট অফলাইনে সেভ করুন':'Save draft offline','এই মাসের হিসাব সেভ করুন':'Save this month’s calculation','ব্যাকআপ ডাউনলোড':'Download backup','ব্যাকআপ রিস্টোর':'Restore backup','প্রতি ইউনিট রেট':'Rate per unit','সাব-মিটার প্রতি চার্জ':'Charge per sub-meter','সর্বমোট':'Grand total','মিটার চার্জ':'Meter charge','ব্যবহার খরচ':'Usage cost','আগের':'Previous','বর্তমান':'Current','বাকি':'Due','পরিশোধিত':'Paid','সব পরিশোধিত ✓':'All paid ✓','সব বাকি':'All due','মোট ইউনিট ব্যবহার':'Total units used','সংগ্রহ হয়েছে':'Collected','বাকি আছে':'Outstanding','মাস':'Month','নতুন মিটার নম্বর (একই হলে ফাঁকা রাখুন)':'New meter number (leave blank if unchanged)','মিটার বদল':'Meter replaced','সেভ:':'Saved:','মেইন মিটার':'Main meter','এই ডিভাইসে সেভ হবে':'Saved on this device','হিসাব মিলে গেছে':'Calculation reconciled','পূর্বের বকেয়া':'Previous due','এই মাসের বিলের সাথে এগুলোও আদায় করতে হবে':'Collect these with this month’s bill','আগের রিডিং দিন':'Enter previous reading','রিডিং দিন':'Enter reading','মিটারের নাম লিখুন':'Enter meter name','যেমনঃ 2B, 3A':'e.g. 2B, 3A','যেমনঃ 5600':'e.g. 5600','যেমনঃ 500':'e.g. 500','মিটার ডিলিট করলে এর সব সাব-মিটারের তথ্য (হিস্ট্রিসহ) ডিলিট হয়ে যাবে। আপনি কি ডিলিট করতে চান?':'Deleting this meter will also delete all its sub-meter data, including history. Do you want to continue?','হ্যাঁ, ডিলিট করুন':'Yes, delete','না':'No','মিটার ও এর সব তথ্য ডিলিট হয়েছে':'Meter and all its data have been deleted','মিটার যোগ হয়েছে: ':'Meter added: ','কোনো সাব-মিটার নেই।':'No sub-meters.','এই মিটারের নিচে কোনো সাব-মিটার নেই। আগে ':'This meter has no sub-meters. First add ','-এ গিয়ে যোগ করুন।':' there.','গড় ধরার মতো আগের তথ্য নেই':'Not enough previous data to calculate an average','বর্তমান রিডিং আগের রিডিংয়ের চেয়ে কম — চেক করুন':'Current reading is lower than previous reading — please check','মিটার চার্জ মোট বিলের চেয়ে বেশি হয়ে গেছে — সংখ্যা দুটো আবার চেক করুন।':'Meter charge is greater than the total bill — please check both values.','ইউনিট রিডিং দেওয়া হয়নি বলে ':'Because unit readings were not entered, ',' টাকা এখনো ভাগ করা যায়নি — উপরে প্রতিটা সাব-মিটারের রিডিং দিন।':' BDT remains undistributed — enter each sub-meter reading above.','হিসাব মিলে গেছে — সাব-মিটারগুলোর সর্বমোট ':'Calculation reconciled — the sub-meters total ',' = মেইন বিল ':' = main bill ','এই মাস ':'This month ',' + পূর্বের ':' + previous ',' বাকি':' due','বাকি হিসেবে ফিরিয়ে নেওয়া হলো':'Marked as unpaid again','✓ পরিশোধিত হিসেবে চিহ্নিত হলো':'✓ Marked as paid','✓ ব্যাকআপ থেকে রিস্টোর হয়েছে':'✓ Backup restored successfully','ব্যাকআপ ডাউনলোড হয়েছে':'Backup downloaded','ফাইলটা পড়া যায়নি, ঠিক জেসন ফাইল দিন':'Could not read the file. Please provide a valid JSON file.','এটা সঠিক ব্যাকআপ ফাইল না':'This is not a valid backup file','এই ব্যাকআপ রিস্টোর করলে বর্তমান সব ডেটা প্রতিস্থাপিত হয়ে যাবে। এগোতে চান?':'Restoring this backup will replace all current data. Continue?','Username ৩–৩০ অক্ষর (a-z, 0-9, _ . -)':'Username must be 3–30 characters (a-z, 0-9, _ . -)','এই username আগে থেকেই আছে':'This username already exists','Username পাওয়া যায়নি':'Username not found','PIN সঠিক নয়':'Incorrect PIN','PIN ৪–৮ সংখ্যার হতে হবে':'PIN must be 4–8 digits','দুটি PIN মেলেনি':'The two PINs do not match','✓ ড্রাফট এই ডিভাইসে সেভ হয়েছে':'✓ Draft saved on this device','✓ ডিভাইসে সেভ হয়েছে':'✓ Saved on this device','✓ অটো-সেভ হয়েছে':'✓ Auto-saved','✓ পরিশোধ: ':'✓ Paid: ','সব মিলিয়ে ':'Grand total ',' পরিশোধিত হিসেবে চিহ্নিত করা হবে। এগোতে চান?':' will be marked as paid. Continue?','এই মাসের বিলের সাথে এগুলোও আদায় করতে হবে':'Collect these with this month’s bill','মোট বিল':'Total bill','ইউনিট রিডিং':'Unit reading','মাসের গড়':'Monthly average','নতুন মিটারের শুরু':'New meter start','গত মাসের রিডিং':'Previous month reading','পুরনো মিটারের শেষ রিডিং: ':'Old meter’s final reading: ','সাব-মিটার প্রতি চার্জ':'Charge per sub-meter','৳':'৳','জানুয়ারি':'January','ফেব্রুয়ারি':'February','মার্চ':'March','এপ্রিল':'April','মে':'May','জুন':'June','জুলাই':'July','আগস্ট':'August','সেপ্টেম্বর':'September','অক্টোবর':'October','নভেম্বর':'November','ডিসেম্বর':'December','টি':'','বকেয়া':'due','বকেয়া আছে':'due','মোট':'Total','এই Monthটিকে আবার ':'Mark this month again as ','Monthের হিসাব সেভ হয়েছে':' month calculation saved','ট্যাবে গিয়ে অন্তত একটা মিটার ও সাব-মিটার যোগ করুন।':' tab and add at least one meter and sub-meter.','০ ⚠':'0 ⚠','শুরু':'Start','গত ':'Last ','আগে ':'Before ','ডিলিট':'Delete','নতুন মিটারের Units এর চেয়ে কম হলে dueটা যোগ হবে':'If lower than the new meter’s units, the due units will be added','ইউনিট রিডিং':'Unit reading','সাব-মিটারগুলোর সর্বমোট':'Sub-meter total','পুরনো মিটার':'Old meter','এর বকেয়াও এর সাথে সাফ হয়েছে':' previous due has also been cleared'
 };
 const EN_BN={'Electricity Bill Calculator':'বিদ্যুৎ বিল হিসাব','Rental electricity bills, clearly organized in one place':'বাড়িভাড়ার বিদ্যুৎ বিল, এক জায়গায় পরিষ্কার হিসাব','Each sub-meter holder’s share is calculated automatically from the main meter bill.':'মেইন মিটারের বিল থেকে প্রতিটি সাব-মিটার হোল্ডারের ভাগ নিজে নিজেই হিসাব হয়ে যায়।','Enter readings to calculate units and the rate per unit':'রিডিং দিলেই ইউনিট ও প্রতি ইউনিটের রেট বের হয়','Unpaid balances are automatically carried into the next month':'বকেয়া পরের মাসের বিলে অটো যোগ হয়','Complete payment history with dates':'কবে পরিশোধ হলো তার তারিখসহ পূর্ণ হিস্ট্রি','Data is saved in this browser; you can back it up from History':'ডেটা এই ব্রাউজারে সেভ থাকে; হিস্ট্রি ট্যাব থেকে ব্যাকআপ নেওয়া যায়','Login':'লগইন','Sign in with username and PIN':'Username ও PIN দিয়ে প্রবেশ করুন','Username':'ইউজারনেম','Confirm PIN':'PIN আবার','Create account':'নতুন অ্যাকাউন্ট','Set a username and a 4–8 digit PIN':'Username ও ৪–৮ সংখ্যার PIN সেট করুন','Back to login':'লগইনে ফিরুন','Profile':'প্রোফাইল','My account':'আমার অ্যাকাউন্ট','Local account':'লোকাল অ্যাকাউন্ট','Offline-ready':'অফলাইনে ব্যবহারযোগ্য','Saved on this device':'এই ডিভাইসে সেভ হবে','Language':'ভাষা','Bangla':'বাংলা','Log out':'লগআউট','Meter setup':'মিটার সেটআপ','This month’s calculation':'এই মাসের হিসাব','History / Backup':'হিস্ট্রি / ব্যাকআপ','Menu':'মেনু','Add main meter':'মেইন মিটার যোগ করুন','Meter name':'মিটারের নাম','Add meter':'মিটার যোগ','No meter has been added yet. Add your first meter above.':'এখনো কোনো মিটার যোগ করা হয়নি। উপরে থেকে প্রথম মিটার যোগ করুন।','Select month':'মাস নির্বাচন করুন','Bill month':'বিল মাস','Load / Edit':'লোড / এডিট','Save draft offline':'ড্রাফট অফলাইনে সেভ করুন','Save this month’s calculation':'এই মাসের হিসাব সেভ করুন','Auto-save enabled':'অটো-সেভ চালু','Download backup':'ব্যাকআপ ডাউনলোড','Restore backup':'ব্যাকআপ রিস্টোর','No monthly calculations have been saved yet.':'এখনো কোনো মাসের হিসাব সেভ করা হয়নি।','Close':'বন্ধ করুন','Sub-meter':'সাব-মিটার','Add sub-meter':'সাব-মিটার যোগ করুন','Delete meter':'মিটার ডিলিট','Tenant / Flat name (optional)':'ভাড়াটিয়া / ফ্ল্যাটের নাম (ঐচ্ছিক)','Total bill (BDT)':'মোট বিল (টাকা)','Meter / demand charge (BDT)':'মিটার চার্জ / ডিমান্ড চার্জ (টাকা)','Previous reading':'আগের রিডিং','Current reading':'বর্তমান রিডিং','Units':'ইউনিট','Rate per unit':'প্রতি ইউনিট রেট','Charge per sub-meter':'সাব-মিটার প্রতি চার্জ','Grand total':'সর্বমোট','Meter charge':'মিটার চার্জ','Usage cost':'ব্যবহার খরচ','Previous':'আগের','Current':'বর্তমান','Due':'বাকি','Paid':'পরিশোধিত','All paid ✓':'সব পরিশোধিত ✓','All due':'সব বাকি','Total units used':'মোট ইউনিট ব্যবহার','Collected':'সংগ্রহ হয়েছে','Outstanding':'বাকি আছে','Month':'মাস','Meter replaced':'মিটার বদল','Saved:':'সেভ:','Main meter':'মেইন মিটার','Calculation reconciled':'হিসাব মিলে গেছে','Previous due':'পূর্বের বকেয়া','Collect these with this month’s bill':'এই মাসের বিলের সাথে এগুলোও আদায় করতে হবে','Enter previous reading':'আগের রিডিং দিন','Enter reading':'রিডিং দিন','Enter meter name':'মিটারের নাম লিখুন','Yes, delete':'হ্যাঁ, ডিলিট করুন','No':'না','Meter and all its data have been deleted':'মিটার ও এর সব তথ্য ডিলিট হয়েছে','Not enough previous data to calculate an average':'গড় ধরার মতো আগের তথ্য নেই','Current reading is lower than previous reading — please check':'বর্তমান রিডিং আগের রিডিংয়ের চেয়ে কম — চেক করুন','Backup downloaded':'ব্যাকআপ ডাউনলোড হয়েছে','Could not read the file. Please provide a valid JSON file.':'ফাইলটা পড়া যায়নি, ঠিক জেসন ফাইল দিন','This is not a valid backup file':'এটা সঠিক ব্যাকআপ ফাইল না','This username already exists':'এই username আগে থেকেই আছে','Username not found':'Username পাওয়া যায়নি','Incorrect PIN':'PIN সঠিক নয়','PIN must be 4–8 digits':'PIN ৪–৮ সংখ্যার হতে হবে','The two PINs do not match':'দুটি PIN মেলেনি','✓ Auto-saved':'✓ অটো-সেভ হয়েছে','January':'জানুয়ারি','February':'ফেব্রুয়ারি','March':'মার্চ','April':'এপ্রিল','May':'মে','June':'জুন','July':'জুলাই','August':'আগস্ট','September':'সেপ্টেম্বর','October':'অক্টোবর','November':'নভেম্বর','December':'ডিসেম্বর','due':'বাকি','Total':'মোট','Start':'শুরু','Last ':'গত ','Before ':'আগে ','Delete':'ডিলিট','Unit reading':'ইউনিট রিডিং'};
+const NEW_TR={"শেষ রিডিং": "last reading", ", নতুন মিটার": ", new meter", "পুরনো মিটারের শেষ রিডিং:": "Old meter last reading:", "আগের মাসে ব্যবহার": "Used last month", "ইউনিট + আগের মাসের ইউনিট সমন্বয়": "units + previous-month adjustment", "🔁 মিটার বদল — পুরনো মিটার": "🔁 Meter replaced — old meter", "মিটার বদল": "Meter changed", "নতুন মিটার নম্বর (একই হলে ফাঁকা রাখুন)": "New meter number (leave blank if same)", "নতুন মিটারের শুরু": "New meter start",  "মিটার যোগ হয়েছে:": "Meter added:", "মিটার ডিলিট": "Delete meter", "না": "No", "হ্যাঁ, ডিলিট করুন": "Yes, delete", "মিটার ডিলিট করলে এর সব সাব-মিটারের তথ্য (হিস্ট্রিসহ) ডিলিট হয়ে যাবে। আপনি কি ডিলিট করতে চান?": "Deleting this meter will also delete all its sub-meter data (including history). Do you want to delete it?", "মিটার ও এর সব তথ্য ডিলিট হয়েছে": "Meter and all its data deleted", "এই মিটারের নিচে কোনো সাব-মিটার নেই। আগে \"মিটার সেটআপ\"-এ গিয়ে যোগ করুন।": "This meter has no sub-meters. Add them in Meter Setup first.", "আগে \"মিটার সেটআপ\" ট্যাবে গিয়ে অন্তত একটা মিটার ও সাব-মিটার যোগ করুন।": "First add at least one meter and sub-meter in the Meter Setup tab.", "টাকা এখনো ভাগ করা যায়নি — উপরে প্রতিটা সাব-মিটারের রিডিং দিন।": "is not split yet — enter every sub-meter reading above.", "= মেইন বিল ৳": "= main bill ৳", "মাসের হিসাব সেভ হয়েছে": "bill saved", "এই মাসটিকে আবার \"বাকি\" হিসেবে চিহ্নিত করতে চান?": "Mark this month as \"Unpaid\" again?", "এই সাব-মিটারের আগের বকেয়া আছে:": "This sub-meter has earlier arrears:", "-এর বিল ৳": " bill ৳", "সহ সব মিলিয়ে ৳": "plus everything = ৳", "পরিশোধিত হিসেবে চিহ্নিত করা হবে। এগোতে চান?": "will be marked as paid. Continue?", "সর্বমোট বিল ৳": "Total bill ৳", "রেট ৳": "Rate ৳", "/ইউনিট · চার্জ ৳": "/unit · charge ৳", "স্ট্যাটাস": "Status", "✓ পরিশোধ:": "✓ Paid on:", "+ পূর্বের ৳": "+ earlier ৳", "বাংলা": "বাংলা", "English": "English"};Object.keys(NEW_TR).forEach(k=>{BN_EN[k]=NEW_TR[k];EN_BN[NEW_TR[k]]=k;});
+const NEW2={"ভাড়াটিয়ার নাম": "Holder name", "মোবাইল নম্বর": "Mobile number", "সাব-মিটার নম্বর": "Sub-meter number", "হিস্ট্রি": "History", "মোট বাকি": "Total due", "এই মাসের বিল": "This month’s bill", "কোনো হিস্ট্রি নেই": "No history yet", "+ সাব-মিটার যোগ করুন": "+ Add sub-meter"};Object.keys(NEW2).forEach(k=>{BN_EN[k]=NEW2[k];EN_BN[NEW2[k]]=k;});
+const NEW3={"রিডিং এন্ট্রি": "Reading entry", "পূর্ণ হিসাব": "Full bill", "শুরুর রিডিং": "Opening reading"};Object.keys(NEW3).forEach(k=>{BN_EN[k]=NEW3[k];EN_BN[NEW3[k]]=k;});
+BN_EN['ডিমান্ড চার্জ (প্রতি সাব-মিটার, টাকা)']='Demand charge (per sub-meter, Tk)';EN_BN['Demand charge (per sub-meter, Tk)']='ডিমান্ড চার্জ (প্রতি সাব-মিটার, টাকা)';
+(function(){const nc=window.confirm.bind(window);window.confirm=m=>nc((localStorage.getItem('bh_language')||'bn')==='en'?replacePhrases(m,BN_EN):m)})();
 function replacePhrases(value,dict){let out=value;Object.keys(dict).sort((a,b)=>b.length-a.length).forEach(k=>{out=out.split(k).join(dict[k]);});return out;}
 function translateTextNode(node,lang){if(node.__translating)return;if(node.__baseText===undefined)node.__baseText=node.nodeValue;const base=node.__baseText;node.__translating=true;node.nodeValue=lang==='en'?replacePhrases(base,BN_EN):replacePhrases(base,EN_BN);node.__translating=false;}
 function translateElement(el,lang){if(el.nodeType===3){if(el.parentElement&&!['SCRIPT','STYLE'].includes(el.parentElement.tagName))translateTextNode(el,lang);return;}if(el.nodeType!==1)return;['placeholder','title','aria-label'].forEach(a=>{if(el.hasAttribute(a)){const key='base'+a;if(!el.dataset[key])el.dataset[key]=el.getAttribute(a);const base=el.dataset[key];el.setAttribute(a,lang==='en'?replacePhrases(base,BN_EN):replacePhrases(base,EN_BN));}});el.childNodes.forEach(n=>translateElement(n,lang));}
-function setAppLanguage(lang){localStorage.setItem('bh_language',lang);document.documentElement.lang=lang;document.title=lang==='en'?'Electricity Bill Calculator — Prototype':'বিদ্যুৎ বিল হিসাব — Prototype';translateElement(document.body,lang);}
+function setAppLanguage(lang){localStorage.setItem('bh_language',lang);document.documentElement.lang=lang;document.title=lang==='en'?'Electricity Bill Calculator':'বিদ্যুৎ বিল হিসাব';translateElement(document.body,lang);document.querySelectorAll('.lang-btn').forEach(b=>b.classList.toggle('active',b.dataset.l===lang));const sel=document.getElementById('languageSelect');if(sel)sel.value=lang;}
 function initProfile(){updateProfile();const lang=localStorage.getItem('bh_language')||'bn';const select=document.getElementById('languageSelect');if(select)select.value=lang;setAppLanguage(lang);if(!window.__langObserver){window.__langObserver=new MutationObserver(records=>{const active=localStorage.getItem('bh_language')||'bn';records.forEach(r=>{if(r.type==='childList')r.addedNodes.forEach(n=>translateElement(n,active));});});window.__langObserver.observe(document.body,{childList:true,subtree:true});}}
 
 
+let calcMode = 'bill';
+function setCalcMode(m){
+  calcMode = m;
+  document.querySelectorAll('.mode-btn').forEach(b=>b.classList.toggle('active', b.dataset.mode===m));
+  document.getElementById('view-calc').classList.toggle('reading-mode', m==='reading');
+}
+setCalcMode(calcMode);
+
 /* ---------------- INIT ---------------- */
+initProfile();
 if(currentUser&&accs()[currentUser])enterApp();
 </script>
 </body>
