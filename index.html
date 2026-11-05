@@ -414,46 +414,10 @@ async function registerUser(){const u=rgUser.value.trim().toLowerCase(),a=accs()
   const first=!Object.keys(a).length;a[u]=await hp(rgPin.value);localStorage.setItem(ACC,JSON.stringify(a));currentUser=u;sessionStorage.setItem('bh_user',u);
   if(first)[STORE_KEY,HISTORY_KEY,DRAFTS_KEY].forEach(k=>{const v=localStorage.getItem(k);if(v!==null)localStorage.setItem(uk(k),v)});enterApp()}
 function logoutUser(){sessionStorage.removeItem('bh_user');location.reload()}
-function enterApp(){document.getElementById('loginOverlay').style.display='none';document.body.classList.remove('locked');userChip.textContent='👤 '+currentUser;initProfile();meters=syncMetersFromHistory();renderSetupView();renderCalcView();renderHistoryView()}
+function enterApp(){document.getElementById('loginOverlay').style.display='none';document.body.classList.remove('locked');userChip.textContent='👤 '+currentUser;initProfile();claimLegacyData();meters=loadMeters();{const r=syncMetersFromHistory(true);if(r.m||r.s)setTimeout(()=>toast('✓ হিস্ট্রি থেকে '+r.m+'টি মিটার ও '+r.s+'টি সাব-মিটার ফিরিয়ে আনা হয়েছে'),400)}renderSetupView();renderCalcView();renderHistoryView()}
 function fmtDate(i){const d=new Date(i);return d.toLocaleDateString('bn-BD',{day:'numeric',month:'long',year:'numeric'})+', '+d.toLocaleTimeString('bn-BD',{hour:'2-digit',minute:'2-digit'})}
 
 function loadMeters(){ try{ return JSON.parse(localStorage.getItem(uk(STORE_KEY))) || []; }catch(e){ return []; } }
-
-/* Sync meter/sub-meter definitions from saved history into setup.
-   Existing setup entries stay authoritative; history-only entries are restored. */
-function syncMetersFromHistory(){
-  const current = loadMeters();
-  const history = loadHistory().slice().sort((a,b)=>a.ym.localeCompare(b.ym));
-  let changed = false;
-  history.forEach(rec=>{
-    (rec.meters||[]).forEach(hm=>{
-      let meter = current.find(m=>m.id===hm.id) || current.find(m=>
-        String(m.name||'').trim().toLowerCase()===String(hm.name||'').trim().toLowerCase());
-      if(!meter){
-        meter = {id:hm.id||uid(), name:hm.name||'মিটার', demandCharge:hm.demandCharge??hm.meterCharge??136, subs:[]};
-        current.push(meter); changed = true;
-      }
-      if(!Array.isArray(meter.subs)){meter.subs=[]; changed=true;}
-      (hm.subs||[]).forEach(hs=>{
-        let sub = meter.subs.find(s=>s.id===hs.id) || meter.subs.find(s=>
-          String(s.label||'').toUpperCase()===String(hs.label||'').toUpperCase() &&
-          (!s.meterNumber || !hs.meterNumber || String(s.meterNumber)===String(hs.meterNumber)));
-        if(!sub){
-          const {total,units,paid,paidAt,curr,prev,usageCost,replacement,...definition}=hs;
-          sub={...definition,id:hs.id||uid(),label:hs.label||nextSubLetter(meter),name:hs.name||'',mobile:hs.mobile||'',meterNumber:hs.meterNumber||'',subs:undefined};
-          delete sub.subs;
-          meter.subs.push(sub); changed=true;
-        } else {
-          ['name','mobile','meterNumber','initReading'].forEach(k=>{
-            if((sub[k]===undefined||sub[k]==='') && hs[k]!==undefined && hs[k]!==''){sub[k]=hs[k];changed=true;}
-          });
-        }
-      });
-    });
-  });
-  if(changed) saveMeters(current);
-  return current;
-}
 function saveMeters(m){ localStorage.setItem(uk(STORE_KEY), JSON.stringify(m)); }
 function loadHistory(){ try{ return JSON.parse(localStorage.getItem(uk(HISTORY_KEY))) || []; }catch(e){ return []; } }
 function saveHistory(h){ localStorage.setItem(uk(HISTORY_KEY), JSON.stringify(h)); }
@@ -471,6 +435,75 @@ function replNote(s){const r=s.replacement;if(!r)return'';return '<div class="re
 
 let meters = loadMeters();
 function uid(){ return 'm' + Math.random().toString(36).slice(2,9); }
+
+/* ---------------- Auto-restore meters / sub-meters from saved history ---------------- */
+const DEL_KEY='billApp_deleted_v1';
+function loadDel(){try{const d=JSON.parse(localStorage.getItem(uk(DEL_KEY)))||{};return {meters:d.meters||[],subs:d.subs||[]}}catch(e){return {meters:[],subs:[]}}}
+function saveDel(d){localStorage.setItem(uk(DEL_KEY),JSON.stringify(d))}
+function markDeleted(kind,key){const d=loadDel();if(!d[kind].includes(key)){d[kind].push(key);saveDel(d)}}
+
+// পুরনো (username ছাড়া) ডেটা থাকলে প্রথম অ্যাকাউন্টে তুলে আনে
+function claimLegacyData(){
+  try{
+    if(localStorage.getItem('bh_legacy_claimed')) return;
+    if(Object.keys(accs())[0]!==currentUser) return;
+    const ks=[STORE_KEY,HISTORY_KEY,DRAFTS_KEY,LOG_KEY];
+    if(!ks.some(k=>localStorage.getItem(k)!==null)) return;
+    const hasOwn=[STORE_KEY,HISTORY_KEY].some(k=>{try{const v=JSON.parse(localStorage.getItem(uk(k)));return Array.isArray(v)&&v.length>0}catch(e){return false}});
+    if(!hasOwn) ks.forEach(k=>{const v=localStorage.getItem(k);if(v!==null&&localStorage.getItem(uk(k))===null)localStorage.setItem(uk(k),v)});
+    localStorage.setItem('bh_legacy_claimed',currentUser);
+  }catch(e){}
+}
+
+// full=true : হিস্ট্রিতে থাকা কিন্তু সেটআপে নেই এমন মিটার/সাব-মিটার ফিরিয়ে আনে (ইউজার ডিলিট না করে থাকলে)
+// full=false: শুধু নাম/লেবেল মিলিয়ে হিস্ট্রির সাথে জোড়া লাগায়, নতুন কিছু বানায় না
+function syncMetersFromHistory(full){
+  const hist=loadHistory(); if(!hist.length) return {m:0,s:0};
+  const del=loadDel(), norm=s=>String(s==null?'':s).trim().toLowerCase();
+  const recs=hist.slice().sort((a,b)=>b.ym.localeCompare(a.ym)); // নতুন মাস আগে
+  const hmeters=r=>(r.meters||[]).filter(k=>k&&k.id);
+  const histMeterIds=()=>new Set(hist.flatMap(r=>hmeters(r).map(k=>k.id)));
+  const histSubIds=mid=>new Set(hist.flatMap(r=>hmeters(r).filter(k=>k.id===mid).flatMap(k=>(k.subs||[]).map(s=>s.id))));
+  let addM=0, addS=0, hChanged=false, mChanged=false;
+
+  // ১) হাতে নতুন করে যোগ করা মিটার (একই নাম) থাকলে হিস্ট্রির আইডি সেটার সাথে জোড়া দাও
+  const tried=new Set();
+  recs.forEach(rec=>hmeters(rec).forEach(hm=>{
+    if(tried.has(hm.id)||meters.some(x=>x.id===hm.id)) return; tried.add(hm.id);
+    const used=histMeterIds();
+    const x=meters.find(k=>norm(k.name)&&norm(k.name)===norm(hm.name)&&!used.has(k.id));
+    if(!x) return;
+    const oldId=hm.id;
+    hist.forEach(r=>hmeters(r).forEach(k=>{ if(k.id===oldId){ k.id=x.id; hChanged=true; } }));
+  }));
+
+  // ২) সাব-মিটার: আইডি না মিললে একই লেবেলের সাব-মিটারের সাথে জোড়া দাও, না থাকলে (full হলে) তৈরি করো
+  recs.forEach(rec=>hmeters(rec).forEach(hm=>{
+    let m=meters.find(x=>x.id===hm.id);
+    if(!m){
+      if(!full||del.meters.includes(hm.id)) return;
+      m={id:hm.id,name:hm.name||'',demandCharge:(hm.meterCharge>0?hm.meterCharge:136),subs:[]};
+      meters.push(m); mChanged=true; addM++;
+    }
+    let added=false;
+    (hm.subs||[]).forEach(hs=>{
+      if(!hs||!hs.id||m.subs.some(x=>x.id===hs.id)) return;
+      const used=histSubIds(m.id);
+      const t=m.subs.find(x=>norm(x.label)&&norm(x.label)===norm(hs.label)&&!used.has(x.id));
+      if(t){ const oldId=hs.id; hist.forEach(r=>hmeters(r).filter(k=>k.id===m.id).forEach(k=>(k.subs||[]).forEach(s=>{ if(s.id===oldId){ s.id=t.id; hChanged=true; } }))); return; }
+      if(!full||del.subs.includes(m.id+':'+hs.id)) return;
+      const rn=hs.replacement&&hs.replacement.newNumber;
+      const ns={id:hs.id,label:hs.label||nextSubLetter(m),name:hs.name||''}; if(rn) ns.meterNumber=rn;
+      m.subs.push(ns); mChanged=true; added=true; addS++;
+    });
+    if(added) m.subs.sort((a,b)=>String(a.label).localeCompare(String(b.label),undefined,{numeric:true}));
+  }));
+
+  if(hChanged) saveHistory(hist);
+  if(mChanged) saveMeters(meters);
+  return {m:addM,s:addS};
+}
+
 
 /* ---------------- Tabs ---------------- */
 document.querySelectorAll('.tab').forEach(tab=>{
@@ -521,7 +554,7 @@ function addMeter(){
   const name = input.value.trim();
   if(!name){ toast('মিটারের নাম লিখুন'); return; }
   const nm = { id: uid(), name, demandCharge: 136, subs: [] }; meters.push(nm); openMeters.add(nm.id);
-  saveMeters(meters);
+  saveMeters(meters); syncMetersFromHistory(false);
   input.value = '';
   renderSetupView();
   toast('মিটার যোগ হয়েছে: ' + name);
@@ -529,7 +562,7 @@ function addMeter(){
 function deleteMeter(meterId){
   const meter = meters.find(m=>m.id===meterId); if(!meter) return;
   askConfirm('"'+escapeHtml(meter.name)+'" মিটার ডিলিট করলে এর সব সাব-মিটারের তথ্য (হিস্ট্রিসহ) ডিলিট হয়ে যাবে। আপনি কি ডিলিট করতে চান?',()=>{
-    meters = meters.filter(m=>m.id!==meterId); saveMeters(meters);
+    meters = meters.filter(m=>m.id!==meterId); saveMeters(meters); markDeleted('meters', meterId);
     saveHistory(loadHistory().map(r=>{r.meters=r.meters.filter(m=>m.id!==meterId);r.grandTotal=r.meters.reduce((a,m)=>a+(m.totalBill||0),0);return r}).filter(r=>r.meters.length));
     const d=loadDrafts(); Object.values(d).forEach(x=>{delete x[meterId]}); saveDrafts(d);
     saveLog(loadLog().filter(e=>e.meterId!==meterId));
@@ -547,13 +580,13 @@ function addSub(meterId){ openMeters.add(meterId);
   const meter = meters.find(m=>m.id===meterId);
   const label = nextSubLetter(meter);
   meter.subs.push({ id: uid(), label, name: '' });
-  saveMeters(meters);
+  saveMeters(meters); syncMetersFromHistory(false);
   renderSetupView();
 }
 function deleteSub(meterId, subId){
   const meter = meters.find(m=>m.id===meterId);
   meter.subs = meter.subs.filter(s=>s.id!==subId);
-  saveMeters(meters);
+  saveMeters(meters); markDeleted('subs', meterId+':'+subId);
   renderSetupView();
 }
 function updateMeterName(meterId, val){
@@ -1049,7 +1082,7 @@ function togglePaid(ym, meterId, subId){
 function exportBackup(){
   const payload = {
     app: 'bidyut-bill-hisab', exportedAt: new Date().toISOString(),
-    meters: loadMeters(), history: loadHistory(), drafts: loadDrafts(), meterLog: loadLog()
+    meters: loadMeters(), history: loadHistory(), drafts: loadDrafts(), meterLog: loadLog(), deleted: loadDel()
   };
   const blob = new Blob([JSON.stringify(payload, null, 2)], {type:'application/json'});
   const url = URL.createObjectURL(blob);
@@ -1075,8 +1108,8 @@ function importBackup(file){
       if(!confirm('এই ব্যাকআপ রিস্টোর করলে বর্তমান সব ডেটা প্রতিস্থাপিত হয়ে যাবে। এগোতে চান?')) return;
       saveMeters(data.meters);
       saveHistory(data.history);
-      saveDrafts(data.drafts || {}); saveLog(data.meterLog || []);
-      meters = data.meters;
+      saveDrafts(data.drafts || {}); saveLog(data.meterLog || []); saveDel(data.deleted || {meters:[],subs:[]});
+      meters = data.meters; syncMetersFromHistory(true);
       renderSetupView();
       renderCalcView();
       renderHistoryView();
