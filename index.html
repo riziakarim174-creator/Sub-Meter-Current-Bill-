@@ -414,10 +414,46 @@ async function registerUser(){const u=rgUser.value.trim().toLowerCase(),a=accs()
   const first=!Object.keys(a).length;a[u]=await hp(rgPin.value);localStorage.setItem(ACC,JSON.stringify(a));currentUser=u;sessionStorage.setItem('bh_user',u);
   if(first)[STORE_KEY,HISTORY_KEY,DRAFTS_KEY].forEach(k=>{const v=localStorage.getItem(k);if(v!==null)localStorage.setItem(uk(k),v)});enterApp()}
 function logoutUser(){sessionStorage.removeItem('bh_user');location.reload()}
-function enterApp(){document.getElementById('loginOverlay').style.display='none';document.body.classList.remove('locked');userChip.textContent='👤 '+currentUser;initProfile();meters=loadMeters();renderSetupView();renderCalcView();renderHistoryView()}
+function enterApp(){document.getElementById('loginOverlay').style.display='none';document.body.classList.remove('locked');userChip.textContent='👤 '+currentUser;initProfile();meters=syncMetersFromHistory();renderSetupView();renderCalcView();renderHistoryView()}
 function fmtDate(i){const d=new Date(i);return d.toLocaleDateString('bn-BD',{day:'numeric',month:'long',year:'numeric'})+', '+d.toLocaleTimeString('bn-BD',{hour:'2-digit',minute:'2-digit'})}
 
 function loadMeters(){ try{ return JSON.parse(localStorage.getItem(uk(STORE_KEY))) || []; }catch(e){ return []; } }
+
+/* Sync meter/sub-meter definitions from saved history into setup.
+   Existing setup entries stay authoritative; history-only entries are restored. */
+function syncMetersFromHistory(){
+  const current = loadMeters();
+  const history = loadHistory().slice().sort((a,b)=>a.ym.localeCompare(b.ym));
+  let changed = false;
+  history.forEach(rec=>{
+    (rec.meters||[]).forEach(hm=>{
+      let meter = current.find(m=>m.id===hm.id) || current.find(m=>
+        String(m.name||'').trim().toLowerCase()===String(hm.name||'').trim().toLowerCase());
+      if(!meter){
+        meter = {id:hm.id||uid(), name:hm.name||'মিটার', demandCharge:hm.demandCharge??hm.meterCharge??136, subs:[]};
+        current.push(meter); changed = true;
+      }
+      if(!Array.isArray(meter.subs)){meter.subs=[]; changed=true;}
+      (hm.subs||[]).forEach(hs=>{
+        let sub = meter.subs.find(s=>s.id===hs.id) || meter.subs.find(s=>
+          String(s.label||'').toUpperCase()===String(hs.label||'').toUpperCase() &&
+          (!s.meterNumber || !hs.meterNumber || String(s.meterNumber)===String(hs.meterNumber)));
+        if(!sub){
+          const {total,units,paid,paidAt,curr,prev,usageCost,replacement,...definition}=hs;
+          sub={...definition,id:hs.id||uid(),label:hs.label||nextSubLetter(meter),name:hs.name||'',mobile:hs.mobile||'',meterNumber:hs.meterNumber||'',subs:undefined};
+          delete sub.subs;
+          meter.subs.push(sub); changed=true;
+        } else {
+          ['name','mobile','meterNumber','initReading'].forEach(k=>{
+            if((sub[k]===undefined||sub[k]==='') && hs[k]!==undefined && hs[k]!==''){sub[k]=hs[k];changed=true;}
+          });
+        }
+      });
+    });
+  });
+  if(changed) saveMeters(current);
+  return current;
+}
 function saveMeters(m){ localStorage.setItem(uk(STORE_KEY), JSON.stringify(m)); }
 function loadHistory(){ try{ return JSON.parse(localStorage.getItem(uk(HISTORY_KEY))) || []; }catch(e){ return []; } }
 function saveHistory(h){ localStorage.setItem(uk(HISTORY_KEY), JSON.stringify(h)); }
