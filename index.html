@@ -554,15 +554,84 @@ function toast(msg){
 function escapeHtml(str){ const d=document.createElement('div'); d.textContent = str||''; return d.innerHTML; }
 
 /* ---------------- SETUP VIEW ---------------- */
+const nrm = x => String(x||'').trim().toLowerCase();
+function findHistoryMeterByName(name){
+  const t = loadTrash().find(x=>x.type==='meter' && nrm(x.meter.name)===nrm(name));
+  if(t) return { src:'trash', item:t };
+  const hist = loadHistory().slice().sort((a,b)=>b.ym.localeCompare(a.ym));
+  for(const r of hist){ const hm = r.meters.find(m=>nrm(m.name)===nrm(name) && !meters.some(x=>x.id===m.id)); if(hm) return { src:'history', hm }; }
+  return null;
+}
 function addMeter(){
   const input = document.getElementById('newMeterName');
   const name = input.value.trim();
   if(!name){ toast('মিটারের নাম লিখুন'); return; }
+  const live = meters.find(m=>nrm(m.name)===nrm(name));
+  if(live){ openMeters.add(live.id); input.value=''; renderSetupView(); toast('এই মিটার আগে থেকেই আছে'); return; }
+  const found = findHistoryMeterByName(name);
+  if(found){
+    askConfirm('"'+escapeHtml(name)+'" — ইতিহাসে এই নামে একটি মিটার পাওয়া গেছে। আপনি কি এই মিটারটি যোগ করতে চান?', ()=>{
+      if(found.src==='trash'){ restoreTrash(found.item.id); openMeters.add(found.item.meter.id); }
+      else {
+        meters.push({ id:found.hm.id, name:found.hm.name, demandCharge:(found.hm.meterCharge>0?found.hm.meterCharge:136), subs:[], removedSubs:[] });
+        syncMetersFromHistory(); saveMeters(meters); openMeters.add(found.hm.id);
+        renderCalcView(); renderHistoryView(); toast('✓ ইতিহাস থেকে যোগ হয়েছে');
+      }
+      input.value=''; renderSetupView();
+    }, { title:'মিটার যোগ করুন', yesText:'হ্যাঁ, যোগ করুন', danger:false });
+    return;
+  }
   const nm = { id: uid(), name, demandCharge: 136, subs: [] }; meters.push(nm); openMeters.add(nm.id);
   saveMeters(meters);
   input.value = '';
   renderSetupView();
   toast('মিটার যোগ হয়েছে: ' + name);
+}
+
+/* ---------- add sub-meter: duplicate check + restore from history ---------- */
+function subCandidates(meter){
+  const live = new Set(meter.subs.map(x=>x.id)), map = {};
+  loadHistory().sort((a,b)=>a.ym.localeCompare(b.ym)).forEach(r=>{
+    const hm = r.meters.find(m=>m.id===meter.id); if(!hm) return;
+    hm.subs.forEach(hs=>{ if(live.has(hs.id)) return; map[hs.id] = { id:hs.id, label:hs.label, name:hs.name||hs.holderName||'', mobile:hs.mobile||'', meterNumber:(hs.replacement&&hs.replacement.newNumber)||hs.meterNumber||'' }; });
+  });
+  loadTrash().forEach(t=>{ if(t.type==='sub' && t.meterId===meter.id && !live.has(t.sub.id)) map[t.sub.id] = Object.assign({}, t.sub); });
+  return Object.values(map);
+}
+function findLiveDup(meter, name, num, exceptId){
+  return meter.subs.find(o=>o.id!==exceptId && ((num && nrm(o.meterNumber)===num) || (name && nrm(o.name)===name && nrm(o.meterNumber)===num)));
+}
+function restoreSubFromCandidate(meterId, c){
+  const m = meters.find(x=>x.id===meterId); if(!m || m.subs.some(x=>x.id===c.id)) return;
+  const q = Object.assign({}, c); if(m.subs.some(x=>x.label===q.label)) q.label = nextSubLetter(m);
+  m.subs.push(q); m.removedSubs = (m.removedSubs||[]).filter(x=>x!==c.id);
+  m.subs.sort((a,b)=>String(a.label).localeCompare(String(b.label),undefined,{numeric:true}));
+  saveTrash(loadTrash().filter(t=>!(t.type==='sub' && t.sub.id===c.id)));
+  saveMeters(meters); openMeters.add(meterId); renderSetupView(); renderCalcView(); toast('✓ ইতিহাস থেকে যোগ হয়েছে');
+}
+function openAddSub(meterId){
+  const meter = meters.find(m=>m.id===meterId); if(!meter) return;
+  const o = document.createElement('div'); o.className = 'modal-overlay active'; o.style.zIndex = 200;
+  o.innerHTML = '<div class="modal" style="max-width:420px"><h3>সাব-মিটার যোগ করুন</h3><label>ভাড়াটিয়ার নাম</label><input id="asName"><label>মোবাইল নম্বর</label><input id="asMobile" type="tel"><label>সাব-মিটার নম্বর</label><input id="asNum"><label>শুরুর রিডিং</label><input id="asInit" type="number" step="0.01"><div class="login-err" id="asErr"></div><div class="modal-actions"><button class="btn btn-ghost" id="asNo">না / No</button><button class="btn btn-primary" id="asYes">যোগ করুন</button></div></div>';
+  document.body.appendChild(o);
+  o.querySelector('#asNo').onclick = ()=>o.remove();
+  o.querySelector('#asYes').onclick = ()=>{
+    const v = id=>o.querySelector('#'+id).value.trim();
+    const f = { name:v('asName'), mobile:v('asMobile'), meterNumber:v('asNum'), initReading:v('asInit') };
+    const name = nrm(f.name), num = nrm(f.meterNumber), err = o.querySelector('#asErr');
+    if(!name && !num){ err.textContent = 'নাম বা সাব-মিটার নম্বর দিন'; return; }
+    const dup = findLiveDup(meter, name, num, null);
+    if(dup){ err.textContent = 'এই সাব-মিটার আগে থেকেই আছে ('+dup.label+(dup.name?' — '+dup.name:'')+')'; return; }
+    const cand = subCandidates(meter).find(c=>(num && nrm(c.meterNumber)===num) || (name && nrm(c.name)===name));
+    o.remove();
+    if(cand){
+      askConfirm('<b>'+escapeHtml(cand.label)+(cand.name?' — '+escapeHtml(cand.name):'')+'</b>'+(cand.meterNumber?' (নম্বর '+escapeHtml(cand.meterNumber)+')':'')+' — ইতিহাসে এই সাব-মিটার পাওয়া গেছে। আপনি কি এই সাব-মিটারটি যোগ করতে চান?', ()=>restoreSubFromCandidate(meterId, cand), { title:'সাব-মিটার যোগ করুন', yesText:'হ্যাঁ, যোগ করুন', danger:false });
+      return;
+    }
+    meter.subs.push({ id:uid(), label:nextSubLetter(meter), name:f.name, mobile:f.mobile, meterNumber:f.meterNumber, initReading:f.initReading });
+    saveMeters(meters); openMeters.add(meterId); renderSetupView(); renderCalcView(); toast('সাব-মিটার যোগ হয়েছে');
+  };
+  o.querySelector('#asName').focus();
 }
 function deleteMeter(meterId){
   const meter = meters.find(m=>m.id===meterId); if(!meter) return;
@@ -616,7 +685,14 @@ function updateSubName(meterId, subId, val){
 }
 const openMeters = new Set();
 function toggleMeterOpen(id){ openMeters.has(id) ? openMeters.delete(id) : openMeters.add(id); renderSetupView(); }
-function updateSubField(mid,sid,f,v){ const m=meters.find(x=>x.id===mid), q=m&&m.subs.find(x=>x.id===sid); if(q){ q[f]=v; saveMeters(meters); } }
+function updateSubField(mid,sid,f,v){
+  const m=meters.find(x=>x.id===mid), q=m&&m.subs.find(x=>x.id===sid); if(!q) return;
+  if(f==='name'||f==='meterNumber'){
+    const n=nrm(f==='name'?v:q.name), u=nrm(f==='meterNumber'?v:q.meterNumber);
+    if(findLiveDup(m,n,u,sid)){ toast('এই সাব-মিটার আগে থেকেই আছে'); renderSetupView(); return; }
+  }
+  q[f]=v; saveMeters(meters);
+}
 function renderSetupView(){
   renderTrash();
   const container = document.getElementById('metersContainer');
@@ -639,7 +715,7 @@ function renderSetupView(){
         ${(()=>{ const l=getPrevReadingFromHistory(meter.id, sub.id, '9999-12'); return l!==null ? '<span class="last-read">শেষ রিডিং: '+l+'</span>' : ''; })()}
         <button class="btn btn-ghost btn-sm" onclick="openSubHistory('${meter.id}','${sub.id}')">হিস্ট্রি</button>
         <button class="icon-btn" title="ডিলিট" onclick="deleteSub('${meter.id}','${sub.id}')"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M18 6L6 18M6 6l12 12"/></svg></button>
-      </div>`).join('') + `</div><div class="add-link" onclick="addSub('${meter.id}')">+ সাব-মিটার যোগ করুন</div>`;
+      </div>`).join('') + `</div><div class="add-link" onclick="openAddSub('${meter.id}')">+ সাব-মিটার যোগ করুন</div>`;
     }
     block.innerHTML = `<div class="meter-head" onclick="toggleMeterOpen('${meter.id}')">
         <div class="meter-name"><input type="text" style="width:140px;font-weight:700;" value="${escapeHtml(meter.name)}" onclick="event.stopPropagation()" onchange="updateMeterName('${meter.id}', this.value)"><span class="tag">${meter.subs.length} সাব-মিটার</span></div>
@@ -1012,7 +1088,7 @@ function saveMonth(){
         const lg = loadLog().filter(e=>!(e.ym===ym&&e.meterId===meter.id&&e.subId===s.id));
         lg.push({ ym, meterId:meter.id, meterName:meter.name, subId:s.id, label:s.label, holder:s.name||'', ...replacement }); saveLog(lg);
       } else { saveLog(loadLog().filter(e=>!(e.ym===ym&&e.meterId===meter.id&&e.subId===s.id))); }
-      return { ...s, replacement, paid: existingSub ? !!existingSub.paid : false, paidAt: existingSub ? (existingSub.paidAt || null) : null };
+      return { ...s, replacement, mobile: subDef.mobile||'', meterNumber: replacement ? (replacement.newNumber||subDef.meterNumber||'') : (subDef.meterNumber||''), paid: existingSub ? !!existingSub.paid : false, paidAt: existingSub ? (existingSub.paidAt || null) : null };
     });
 
     record.meters.push({
@@ -1229,6 +1305,7 @@ const NEW4={"PIN পরিবর্তন": "Change PIN", "বর্তমান
 const NEW5={"পেমেন্ট": "Payment", "হ্যাঁ": "Yes", "হ্যাঁ, বাকি করুন": "Yes, mark as due", "হ্যাঁ, রিস্টোর করুন": "Yes, restore", "ব্যাকআপ রিস্টোর": "Restore backup", "এই মাসটিকে আবার \"বাকি\" হিসেবে চিহ্নিত করতে চান?": "Mark this month as due again?"};Object.keys(NEW5).forEach(k=>{BN_EN[k]=NEW5[k];EN_BN[NEW5[k]]=k;});
 const NEW6={"আপনি কি সাব-মিটার": "Do you want to delete sub-meter", "সাব-মিটার ডিলিট": "Delete sub-meter", "সাব-মিটার ডিলিট হয়েছে": "Sub-meter deleted"};Object.keys(NEW6).forEach(k=>{BN_EN[k]=NEW6[k];EN_BN[NEW6[k]]=k;});
 const NEW7={"ডিলিট করা মিটার": "Deleted meters", "ফিরিয়ে আনুন": "Restore", "হ্যাঁ, ফিরিয়ে আনুন": "Yes, restore", "আপনি কি এই মিটারটি ফিরিয়ে আনতে (undo) চান?": "Do you want to restore (undo) this meter?", "আপনি কি এই সাব-মিটারটি ফিরিয়ে আনতে (undo) চান?": "Do you want to restore (undo) this sub-meter?", "✓ ফিরিয়ে আনা হয়েছে": "✓ Restored", "আগে মিটারটি ফিরিয়ে আনুন": "Restore the meter first", "এই মিটার আগে থেকেই আছে": "This meter already exists", "মিটার ডিলিট হয়েছে — নিচের \"ডিলিট করা মিটার\" থেকে ফিরিয়ে আনা যাবে": "Meter deleted — you can restore it from \"Deleted meters\" below", "সাব-মিটার ডিলিট হয়েছে — নিচ থেকে ফিরিয়ে আনা যাবে": "Sub-meter deleted — you can restore it from below"};Object.keys(NEW7).forEach(k=>{BN_EN[k]=NEW7[k];EN_BN[NEW7[k]]=k;});
+const NEW8={"সাব-মিটার যোগ করুন": "Add sub-meter", "যোগ করুন": "Add", "নাম বা সাব-মিটার নম্বর দিন": "Enter a name or sub-meter number", "এই সাব-মিটার আগে থেকেই আছে": "This sub-meter already exists", "ইতিহাসে এই নামে একটি মিটার পাওয়া গেছে।": "A meter with this name was found in history.", "ইতিহাসে এই সাব-মিটার পাওয়া গেছে।": "This sub-meter was found in history.", "আপনি কি এই মিটারটি যোগ করতে চান?": "Do you want to add this meter?", "আপনি কি এই সাব-মিটারটি যোগ করতে চান?": "Do you want to add this sub-meter?", "(নম্বর ": "(number ", "মিটার যোগ করুন": "Add meter", "হ্যাঁ, যোগ করুন": "Yes, add", "✓ ইতিহাস থেকে যোগ হয়েছে": "✓ Added from history", "সাব-মিটার যোগ হয়েছে": "Sub-meter added"};Object.keys(NEW8).forEach(k=>{BN_EN[k]=NEW8[k];EN_BN[NEW8[k]]=k;});
 (function(){const nc=window.confirm.bind(window);window.confirm=m=>nc((localStorage.getItem('bh_language')||'bn')==='en'?replacePhrases(m,BN_EN):m)})();
 function replacePhrases(value,dict){let out=value;Object.keys(dict).sort((a,b)=>b.length-a.length).forEach(k=>{out=out.split(k).join(dict[k]);});return out;}
 function translateTextNode(node,lang){if(node.__translating)return;if(node.__baseText===undefined)node.__baseText=node.nodeValue;const base=node.__baseText;node.__translating=true;node.nodeValue=lang==='en'?replacePhrases(base,BN_EN):replacePhrases(base,EN_BN);node.__translating=false;}
