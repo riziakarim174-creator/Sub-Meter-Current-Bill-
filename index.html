@@ -298,6 +298,7 @@
   .profile-trigger-text{display:inline!important;max-width:84px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
   .pin-box{margin:12px 0;border-top:1px solid var(--line);padding-top:10px}.pin-box summary{cursor:pointer;font-weight:700;font-size:13px}.pin-box input{margin-bottom:4px}
   .trash-box{margin-top:16px;border:1px dashed var(--line);border-radius:12px;padding:12px 14px;background:#fff}.trash-title{font-weight:700;font-size:13px;color:var(--muted);margin-bottom:6px}.trash-row{display:flex;justify-content:space-between;align-items:center;gap:10px;padding:9px 0;border-top:1px solid var(--line);font-size:13px}.trash-row small{display:block;color:var(--muted);font-size:11px;margin-top:2px}
+  .prevInput[readonly],.currInput.locked{background:#f1f5f9;color:#475569;cursor:not-allowed}.currInput.locked{border-color:#a7f3d0;background:#ecfdf5;color:#065f46;cursor:pointer}
 </style>
 </head>
 <body class="locked">
@@ -364,7 +365,7 @@
 
     <div class="mode-switch"><button class="mode-btn" data-mode="reading" onclick="setCalcMode('reading')">রিডিং এন্ট্রি</button><button class="mode-btn" data-mode="bill" onclick="setCalcMode('bill')">পূর্ণ হিসাব</button><span class="draft-status" id="draftStatus"></span></div>
 <div id="calcMetersContainer"></div>
-<div class="card" id="readingSaveBar"><button class="btn btn-primary" onclick="saveDraft()">✓ রিডিং সেভ করুন</button></div>
+<div class="card" id="readingSaveBar"><button class="btn btn-primary" onclick="saveReadings()">✓ রিডিং সেভ করুন</button></div>
 
     <div class="card" id="calcEmpty" style="display:none;">
       <p class="sub" style="margin:0;">আগে "মিটার সেটআপ" ট্যাবে গিয়ে অন্তত একটা মিটার ও সাব-মিটার যোগ করুন।</p>
@@ -408,16 +409,16 @@ const STORE_KEY = 'billApp_meters_v1';
 const HISTORY_KEY = 'billApp_history_v2';
 const DRAFTS_KEY = 'billApp_drafts_v2';
 
-let currentUser=sessionStorage.getItem('bh_user')||'';
+let currentUser=sessionStorage.getItem('bh_user')||localStorage.getItem('bh_user_keep')||'';
 const ACC='bh_accounts';
 function accs(){try{return JSON.parse(localStorage.getItem(ACC))||{}}catch(e){return {}}}
 function uk(k){return k+'__'+currentUser}
 async function hp(x){try{const b=await crypto.subtle.digest('SHA-256',new TextEncoder().encode('bh:'+x));return [...new Uint8Array(b)].map(v=>v.toString(16).padStart(2,'0')).join('')}catch(e){let h=5381;for(const c of 'bh:'+x)h=((h<<5)+h+c.charCodeAt(0))|0;return 'f'+h}}
 function toggleAuth(reg){document.getElementById('loginForm').style.display=reg?'none':'block';document.getElementById('regForm').style.display=reg?'block':'none';authErr('')}
 function authErr(m){document.getElementById('loginErr').textContent=m}
-async function loginUser(){const u=lgUser.value.trim().toLowerCase(),a=accs();if(!a[u])return authErr('Username পাওয়া যায়নি');if(a[u]!==await hp(lgPin.value))return authErr('PIN সঠিক নয়');currentUser=u;sessionStorage.setItem('bh_user',u);enterApp()}
+async function loginUser(){const u=lgUser.value.trim().toLowerCase(),a=accs();if(!a[u])return authErr('Username পাওয়া যায়নি');if(a[u]!==await hp(lgPin.value))return authErr('PIN সঠিক নয়');currentUser=u;sessionStorage.setItem('bh_user',u);localStorage.setItem('bh_user_keep',u);enterApp()}
 async function registerUser(){const u=rgUser.value.trim().toLowerCase(),a=accs();if(!/^[a-z0-9_.-]{3,30}$/.test(u))return authErr('Username ৩–৩০ অক্ষর (a-z, 0-9, _ . -)');if(a[u])return authErr('এই username আগে থেকেই আছে');if(!/^\d{4,8}$/.test(rgPin.value))return authErr('PIN ৪–৮ সংখ্যার হতে হবে');if(rgPin.value!==rgPin2.value)return authErr('দুটি PIN মেলেনি');
-  const first=!Object.keys(a).length;const nm=JSON.parse(localStorage.getItem('bh_names')||'{}');nm[u]=rgUser.value.trim();localStorage.setItem('bh_names',JSON.stringify(nm));a[u]=await hp(rgPin.value);localStorage.setItem(ACC,JSON.stringify(a));currentUser=u;sessionStorage.setItem('bh_user',u);
+  const first=!Object.keys(a).length;const nm=JSON.parse(localStorage.getItem('bh_names')||'{}');nm[u]=rgUser.value.trim();localStorage.setItem('bh_names',JSON.stringify(nm));a[u]=await hp(rgPin.value);localStorage.setItem(ACC,JSON.stringify(a));currentUser=u;sessionStorage.setItem('bh_user',u);localStorage.setItem('bh_user_keep',u);
   if(first)[STORE_KEY,HISTORY_KEY,DRAFTS_KEY].forEach(k=>{const v=localStorage.getItem(k);if(v!==null)localStorage.setItem(uk(k),v)});enterApp()}
 async function changePin(){
   const a=accs(), err=document.getElementById('pnErr'), o=pnOld.value, n=pnNew.value;
@@ -427,7 +428,7 @@ async function changePin(){
   a[currentUser]=await hp(n); localStorage.setItem(ACC,JSON.stringify(a));
   pnOld.value=pnNew.value=pnNew2.value=''; err.textContent=''; toast('✓ PIN বদলানো হয়েছে');
 }
-function logoutUser(){sessionStorage.removeItem('bh_user');location.reload()}
+function logoutUser(){sessionStorage.removeItem('bh_user');localStorage.removeItem('bh_user_keep');location.reload()}
 function enterApp(){document.getElementById('loginOverlay').style.display='none';document.body.classList.remove('locked');meters=loadMeters();syncMetersFromHistory();initProfile();renderSetupView();renderCalcView();renderHistoryView();connectivityMode()}
 function fmtDate(i){const d=new Date(i);return d.toLocaleDateString('bn-BD',{day:'numeric',month:'long',year:'numeric'})+', '+d.toLocaleTimeString('bn-BD',{hour:'2-digit',minute:'2-digit'})}
 
@@ -450,7 +451,7 @@ function connectivityMode(){
   else setCalcMode('bill');
 }
 window.addEventListener('offline', connectivityMode);
-window.addEventListener('online', ()=>{ if(currentUser) setCalcMode('bill'); });
+window.addEventListener('online', ()=>{ if(currentUser){ renderCalcView(); setCalcMode('bill'); } });
 function loadMeters(){ try{ return JSON.parse(localStorage.getItem(uk(STORE_KEY))) || []; }catch(e){ return []; } }
 function saveMeters(m){ localStorage.setItem(uk(STORE_KEY), JSON.stringify(m)); }
 function loadHistoryRaw(){try{return JSON.parse(localStorage.getItem(uk(HISTORY_KEY)))||[]}catch(e){return []}}
@@ -853,7 +854,7 @@ function getPrevReadingFromHistory(meterId, subId, ym){
   });
   const drafts = loadDrafts();
   Object.keys(drafts).forEach(dm=>{
-    if(dm >= ym || (best && dm <= best.ym)) return;
+    if(dm >= ym || (best && dm < best.ym)) return;
     const d = drafts[dm] && drafts[dm][meterId], q = d && d.subs && d.subs[subId];
     if(q && q.curr!=='' && q.curr!==null && q.curr!==undefined && !isNaN(parseFloat(q.curr))) best = { ym:dm, v:parseFloat(q.curr) };
   });
@@ -904,7 +905,7 @@ function renderCalcView(){
       let prevVal = d.prev;
       let autoFilled = false;
       const hist = getPrevReadingFromHistory(meter.id, sub.id, ym);
-      if(hist !== null && !d.prevManual && !d.replaced){ prevVal = hist; autoFilled = true; }
+      if(hist !== null && !d.replaced){ prevVal = hist; autoFilled = true; }
       else if(prevVal === undefined || prevVal === null){ prevVal = ''; }
       const currVal = (d.curr!==undefined && d.curr!==null) ? d.curr : '';
       const isRepl = !!d.replaced;
@@ -918,11 +919,11 @@ function renderCalcView(){
         <tr>
           <td><span style="font-weight:700; color:var(--brass-dark);">${sub.label}</span>${sub.name ? ' — '+escapeHtml(sub.name) : ''}<label class="repl-toggle"><input type="checkbox" class="replInput" data-meter="${meter.id}" data-sub="${sub.id}" ${isRepl?'checked':''}> মিটার বদল</label></td>
           <td style="width:110px;">
-            <input type="number" step="0.01" class="prevInput" data-manual="${d.prevManual?'1':''}" data-meter="${meter.id}" data-sub="${sub.id}" value="${prevVal}" placeholder="${isRepl?'শুরু':'আগের'}">
+            <input type="number" step="0.01" class="prevInput" ${autoFilled?'readonly':''} data-manual="${d.prevManual?'1':''}" data-meter="${meter.id}" data-sub="${sub.id}" value="${prevVal}" placeholder="${isRepl?'শুরু':'আগের'}">
             ${isRepl ? '<span class="auto-tag">নতুন মিটারের শুরু</span>' : (autoFilled ? '<span class="auto-tag">গত মাসের রিডিং</span>' : '')}
           </td>
           <td style="width:110px;">
-            <input type="number" step="0.01" class="currInput" data-meter="${meter.id}" data-sub="${sub.id}" value="${currVal}" placeholder="বর্তমান">
+            <input type="number" step="0.01" class="currInput" data-locked="${(d.offline && currVal!=='') ? '1' : ''}" data-meter="${meter.id}" data-sub="${sub.id}" value="${currVal}" placeholder="বর্তমান">
           </td>
           <td class="units-cell" id="units-${meter.id}-${sub.id}" style="width:70px;">—</td>
         </tr>${replRow}`;
@@ -976,7 +977,7 @@ function readMeterInputsFromDOM(meter){
     const currInput = document.querySelector(`.currInput[data-meter="${meter.id}"][data-sub="${sub.id}"]`);
     const rc = document.querySelector(`.replInput[data-meter="${meter.id}"][data-sub="${sub.id}"]`);
     const nn = document.querySelector(`.newNoInput[data-meter="${meter.id}"][data-sub="${sub.id}"]`);
-    subsReadings[sub.id] = { prev: prevInput ? prevInput.value : '', curr: currInput ? currInput.value : '', prevManual: !!(prevInput && prevInput.dataset.manual==='1'), replaced: !!(rc && rc.checked), newNo: nn ? nn.value.trim() : '' };
+    subsReadings[sub.id] = { prev: prevInput ? prevInput.value : '', curr: currInput ? currInput.value : '', prevManual: !!(prevInput && prevInput.dataset.manual==='1'), offline: !!(currInput && currInput.dataset.locked==='1'), replaced: !!(rc && rc.checked), newNo: nn ? nn.value.trim() : '' };
   });
   return {
     totalBill: totalBillInput ? totalBillInput.value : '',
@@ -1323,6 +1324,7 @@ const NEW5={"পেমেন্ট": "Payment", "হ্যাঁ": "Yes", "হ�
 const NEW6={"আপনি কি সাব-মিটার": "Do you want to delete sub-meter", "সাব-মিটার ডিলিট": "Delete sub-meter", "সাব-মিটার ডিলিট হয়েছে": "Sub-meter deleted"};Object.keys(NEW6).forEach(k=>{BN_EN[k]=NEW6[k];EN_BN[NEW6[k]]=k;});
 const NEW7={"ডিলিট করা মিটার": "Deleted meters", "ফিরিয়ে আনুন": "Restore", "হ্যাঁ, ফিরিয়ে আনুন": "Yes, restore", "আপনি কি এই মিটারটি ফিরিয়ে আনতে (undo) চান?": "Do you want to restore (undo) this meter?", "আপনি কি এই সাব-মিটারটি ফিরিয়ে আনতে (undo) চান?": "Do you want to restore (undo) this sub-meter?", "✓ ফিরিয়ে আনা হয়েছে": "✓ Restored", "আগে মিটারটি ফিরিয়ে আনুন": "Restore the meter first", "এই মিটার আগে থেকেই আছে": "This meter already exists", "মিটার ডিলিট হয়েছে — নিচের \"ডিলিট করা মিটার\" থেকে ফিরিয়ে আনা যাবে": "Meter deleted — you can restore it from \"Deleted meters\" below", "সাব-মিটার ডিলিট হয়েছে — নিচ থেকে ফিরিয়ে আনা যাবে": "Sub-meter deleted — you can restore it from below"};Object.keys(NEW7).forEach(k=>{BN_EN[k]=NEW7[k];EN_BN[NEW7[k]]=k;});
 const NEW8={"সাব-মিটার যোগ করুন": "Add sub-meter", "যোগ করুন": "Add", "নাম বা সাব-মিটার নম্বর দিন": "Enter a name or sub-meter number", "এই সাব-মিটার আগে থেকেই আছে": "This sub-meter already exists", "ইতিহাসে এই নামে একটি মিটার পাওয়া গেছে।": "A meter with this name was found in history.", "ইতিহাসে এই সাব-মিটার পাওয়া গেছে।": "This sub-meter was found in history.", "আপনি কি এই মিটারটি যোগ করতে চান?": "Do you want to add this meter?", "আপনি কি এই সাব-মিটারটি যোগ করতে চান?": "Do you want to add this sub-meter?", "(নম্বর ": "(number ", "মিটার যোগ করুন": "Add meter", "হ্যাঁ, যোগ করুন": "Yes, add", "✓ ইতিহাস থেকে যোগ হয়েছে": "✓ Added from history", "সাব-মিটার যোগ হয়েছে": "Sub-meter added"};Object.keys(NEW8).forEach(k=>{BN_EN[k]=NEW8[k];EN_BN[NEW8[k]]=k;});
+const NEW9={"এই রিডিং অফলাইনে নেওয়া হয়েছে। আপনি কি এটি পরিবর্তন করতে চান?": "This reading was taken offline. Do you want to change it?", "রিডিং পরিবর্তন": "Change reading", "হ্যাঁ, পরিবর্তন করব": "Yes, change it", "✓ রিডিং সেভ হয়েছে": "✓ Readings saved"};Object.keys(NEW9).forEach(k=>{BN_EN[k]=NEW9[k];EN_BN[NEW9[k]]=k;});
 (function(){const nc=window.confirm.bind(window);window.confirm=m=>nc((localStorage.getItem('bh_language')||'bn')==='en'?replacePhrases(m,BN_EN):m)})();
 function replacePhrases(value,dict){let out=value;Object.keys(dict).sort((a,b)=>b.length-a.length).forEach(k=>{out=out.split(k).join(dict[k]);});return out;}
 function translateTextNode(node,lang){if(node.__translating)return;if(node.__baseText===undefined)node.__baseText=node.nodeValue;const base=node.__baseText;node.__translating=true;node.nodeValue=lang==='en'?replacePhrases(base,BN_EN):replacePhrases(base,EN_BN);node.__translating=false;}
@@ -1332,10 +1334,26 @@ function initProfile(){updateProfile();const lang=localStorage.getItem('bh_langu
 
 
 let calcMode = 'bill';
+function applyLocks(){
+  document.querySelectorAll('.currInput').forEach(i=>{ i.readOnly = (calcMode==='bill' && i.dataset.locked==='1'); i.classList.toggle('locked', i.readOnly); });
+}
+function saveReadings(){
+  document.querySelectorAll('.currInput').forEach(i=>{ i.dataset.locked = i.value!=='' ? '1' : ''; });
+  autoSaveDraft(); applyLocks(); toast('✓ রিডিং সেভ হয়েছে');
+}
+document.getElementById('calcMetersContainer').addEventListener('click', e=>{
+  const i = e.target.closest && e.target.closest('.currInput');
+  if(i && i.readOnly && i.dataset.locked==='1'){
+    askConfirm('এই রিডিং অফলাইনে নেওয়া হয়েছে। আপনি কি এটি পরিবর্তন করতে চান?', ()=>{ i.dataset.locked=''; i.readOnly=false; i.classList.remove('locked'); autoSaveDraft(); i.focus(); }, { title:'রিডিং পরিবর্তন', yesText:'হ্যাঁ, পরিবর্তন করব', danger:false });
+  }
+});
+const _renderCalcViewBase = renderCalcView;
+renderCalcView = function(){ _renderCalcViewBase(); applyLocks(); };
 function setCalcMode(m){
   calcMode = m;
   document.querySelectorAll('.mode-btn').forEach(b=>b.classList.toggle('active', b.dataset.mode===m));
   document.getElementById('view-calc').classList.toggle('reading-mode', m==='reading');
+  applyLocks();
 }
 setCalcMode(calcMode);
 
