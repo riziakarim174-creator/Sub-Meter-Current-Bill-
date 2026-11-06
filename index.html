@@ -1,7 +1,8 @@
 <!DOCTYPE html>
 <html lang="bn">
 <head>
-<link rel="preconnect" href="https://fonts.googleapis.com"><link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=Hind+Siliguri:wght@400;500;600;700&display=swap" rel="stylesheet">
+<link rel="manifest" href="manifest.webmanifest"><meta name="theme-color" content="#0f766e"><link rel="apple-touch-icon" href="icon-192.png"><meta name="apple-mobile-web-app-capable" content="yes">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=Hind+Siliguri:wght@400;500;600;700&display=swap" media="print" onload="this.media='all'">
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>বিদ্যুৎ বিল হিসাব — Prototype</title>
@@ -404,6 +405,13 @@
 <div class="toast" id="toast"></div>
 
 <script>
+(function(){
+  function mem(){const m={};return{getItem:k=>(k in m?m[k]:null),setItem:(k,v)=>{m[k]=String(v)},removeItem:k=>{delete m[k]},key:i=>Object.keys(m)[i]||null,get length(){return Object.keys(m).length},clear:()=>{for(const k in m)delete m[k]}}}
+  ['localStorage','sessionStorage'].forEach(n=>{
+    let ok=true; try{ const st=window[n]; st.setItem('__t','1'); st.removeItem('__t'); }catch(e){ ok=false; }
+    if(!ok){ try{ Object.defineProperty(window,n,{value:mem(),configurable:true}); }catch(e){} window.__noStorage=true; }
+  });
+})();
 /* ---------------- Storage ---------------- */
 const STORE_KEY = 'billApp_meters_v1';
 const HISTORY_KEY = 'billApp_history_v2';
@@ -445,13 +453,20 @@ function syncMetersFromHistory(){
   }));
   if(changed){ meters.forEach(m=>m.subs.sort((a,b)=>String(a.label).localeCompare(String(b.label),undefined,{numeric:true}))); saveMeters(meters); }
 }
+let _wasOnline = null;
 function connectivityMode(){
   if(!currentUser) return;
-  if(navigator.onLine===false){ const t=document.querySelector('.tab[data-view="calc"]'); if(t) t.click(); setCalcMode('reading'); }
-  else setCalcMode('bill');
+  const online = navigator.onLine !== false;
+  if(_wasOnline === online) return;
+  _wasOnline = online;
+  if(!online){
+    const t = document.querySelector('.tab[data-view="calc"]');
+    if(t && !document.getElementById('view-calc').classList.contains('active')) t.click();
+    setCalcMode('reading');
+  } else setCalcMode('bill');
 }
 window.addEventListener('offline', connectivityMode);
-window.addEventListener('online', ()=>{ if(currentUser){ renderCalcView(); setCalcMode('bill'); } });
+window.addEventListener('online', connectivityMode);
 function loadMeters(){ try{ return JSON.parse(localStorage.getItem(uk(STORE_KEY))) || []; }catch(e){ return []; } }
 function saveMeters(m){ localStorage.setItem(uk(STORE_KEY), JSON.stringify(m)); }
 function loadHistoryRaw(){try{return JSON.parse(localStorage.getItem(uk(HISTORY_KEY)))||[]}catch(e){return []}}
@@ -1359,6 +1374,8 @@ setCalcMode(calcMode);
 
 /* ---------------- INIT ---------------- */
 initProfile();
+if(window.__noStorage){ document.body.insertAdjacentHTML('afterbegin','<div style="background:#b45309;color:#fff;padding:10px 14px;font-size:13px;font-weight:600;text-align:center;position:relative;z-index:300">ডেটা সেভ হচ্ছে না / Data is not being saved — হোস্ট করা লিংক Chrome-এ খুলুন / open the hosted link in Chrome</div>'); }
+if('serviceWorker' in navigator && /^https?:/.test(location.protocol)){ window.addEventListener('load',()=>navigator.serviceWorker.register('sw.js').catch(()=>{})); }
 if(currentUser&&accs()[currentUser])enterApp();
 </script>
 </body>
