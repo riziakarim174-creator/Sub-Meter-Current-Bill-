@@ -119,4 +119,18 @@ Opening it from Pages needs internet the first time. For offline use on a phone,
 
 ## License
 
-Add the license you want to use (for example MIT) as a `LICENSE` file in the repository.
+MIT
+
+---
+
+## Link 
+
+[MIT](https://riziakarim174-creator.github.io/Sub-Meter-Current-Bill-/)
+
+---
+
+## Inspired By
+
+My beloved mother.. To help her to make her work easier..
+
+---
