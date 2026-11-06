@@ -297,6 +297,7 @@
   #readingSaveBar{display:none}#view-calc.reading-mode #readingSaveBar{display:block}
   .profile-trigger-text{display:inline!important;max-width:84px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
   .pin-box{margin:12px 0;border-top:1px solid var(--line);padding-top:10px}.pin-box summary{cursor:pointer;font-weight:700;font-size:13px}.pin-box input{margin-bottom:4px}
+  .trash-box{margin-top:16px;border:1px dashed var(--line);border-radius:12px;padding:12px 14px;background:#fff}.trash-title{font-weight:700;font-size:13px;color:var(--muted);margin-bottom:6px}.trash-row{display:flex;justify-content:space-between;align-items:center;gap:10px;padding:9px 0;border-top:1px solid var(--line);font-size:13px}.trash-row small{display:block;color:var(--muted);font-size:11px;margin-top:2px}
 </style>
 </head>
 <body class="locked">
@@ -338,6 +339,7 @@
     </div>
 
     <div id="metersContainer"></div>
+<div id="trashContainer"></div>
 
     <div class="empty" id="setupEmpty" style="display:none;">
       <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M13 2L4 14h6l-1 8 9-12h-6l1-8z"/></svg>
@@ -456,6 +458,46 @@ function saveHistory(h){ localStorage.setItem(uk(HISTORY_KEY), JSON.stringify(h)
 function loadDrafts(){ try{ return JSON.parse(localStorage.getItem(uk(DRAFTS_KEY))) || {}; }catch(e){ return {}; } }
 function saveDrafts(d){ localStorage.setItem(uk(DRAFTS_KEY), JSON.stringify(d)); }
 const LOG_KEY='billApp_meterlog_v1';
+const TRASH_KEY='billApp_trash_v1';
+function loadTrash(){try{return JSON.parse(localStorage.getItem(uk(TRASH_KEY)))||[]}catch(e){return []}}
+function saveTrash(t){localStorage.setItem(uk(TRASH_KEY),JSON.stringify(t))}
+function renderTrash(){
+  const box=document.getElementById('trashContainer'); if(!box) return;
+  const tr=loadTrash(); if(!tr.length){ box.innerHTML=''; return; }
+  box.innerHTML='<div class="trash-box"><div class="trash-title">ডিলিট করা মিটার ('+tr.length+')</div>'+tr.map(it=>{
+    const label = it.type==='meter' ? '<b>মেইন মিটার</b> '+escapeHtml(it.meter.name)+' · '+it.meter.subs.length+' সাব-মিটার'
+      : '<b>সাব-মিটার</b> '+escapeHtml(it.sub.label)+(it.sub.name?' — '+escapeHtml(it.sub.name):'')+' ('+escapeHtml(it.meterName)+')';
+    return '<div class="trash-row"><span>'+label+'<small>'+fmtDate(it.deletedAt)+'</small></span><button class="btn btn-ghost btn-sm" onclick="askRestore(\''+it.id+'\')">ফিরিয়ে আনুন</button></div>';
+  }).join('')+'</div>';
+}
+function askRestore(id){
+  const it=loadTrash().find(x=>x.id===id); if(!it) return;
+  askConfirm('আপনি কি এই '+(it.type==='meter'?'মিটারটি':'সাব-মিটারটি')+' ফিরিয়ে আনতে (undo) চান?', ()=>restoreTrash(id), {title:'ফিরিয়ে আনুন',yesText:'হ্যাঁ, ফিরিয়ে আনুন',danger:false});
+}
+function restoreTrash(id){
+  const tr=loadTrash(), it=tr.find(x=>x.id===id); if(!it) return;
+  if(it.type==='meter'){
+    if(meters.some(m=>m.id===it.meter.id)){ toast('এই মিটার আগে থেকেই আছে'); return; }
+    meters.push(it.meter); saveMeters(meters);
+    const h=loadHistory();
+    it.history.forEach(pt=>{
+      let r=h.find(x=>x.ym===pt.ym); if(!r){ r={ym:pt.ym,savedAt:pt.savedAt,meters:[],grandTotal:0}; h.push(r); }
+      r.meters=r.meters.filter(m=>m.id!==pt.meter.id); r.meters.push(pt.meter);
+      r.grandTotal=r.meters.reduce((a,m)=>a+(m.totalBill||0),0);
+    });
+    saveHistory(h);
+    const d=loadDrafts(); Object.keys(it.drafts||{}).forEach(ym=>{ d[ym]=d[ym]||{}; d[ym][it.meter.id]=it.drafts[ym]; }); saveDrafts(d);
+    saveLog(loadLog().concat(it.log||[]));
+  } else {
+    const m=meters.find(x=>x.id===it.meterId);
+    if(!m){ toast('আগে মিটারটি ফিরিয়ে আনুন'); return; }
+    if(!m.subs.some(x=>x.id===it.sub.id)) m.subs.push(it.sub);
+    m.removedSubs=(m.removedSubs||[]).filter(x=>x!==it.sub.id);
+    m.subs.sort((a,b)=>String(a.label).localeCompare(String(b.label),undefined,{numeric:true})); saveMeters(meters);
+  }
+  saveTrash(tr.filter(x=>x.id!==id));
+  renderSetupView(); renderCalcView(); renderHistoryView(); toast('✓ ফিরিয়ে আনা হয়েছে');
+}
 function loadLog(){try{return JSON.parse(localStorage.getItem(uk(LOG_KEY)))||[]}catch(e){return []}}
 function saveLog(l){localStorage.setItem(uk(LOG_KEY),JSON.stringify(l))}
 function histBefore(mid,sid,ym){return loadHistory().filter(h=>h.ym<ym).sort((a,b)=>a.ym<b.ym?1:-1).flatMap(r=>{const m=r.meters.find(x=>x.id===mid);const q=m&&m.subs.find(x=>x.id===sid);return q?[{ym:r.ym,s:q}]:[]})}
@@ -525,12 +567,15 @@ function addMeter(){
 function deleteMeter(meterId){
   const meter = meters.find(m=>m.id===meterId); if(!meter) return;
   askConfirm('"'+escapeHtml(meter.name)+'" মিটার ডিলিট করলে এর সব সাব-মিটারের তথ্য (হিস্ট্রিসহ) ডিলিট হয়ে যাবে। আপনি কি ডিলিট করতে চান?',()=>{
+    const histParts=[]; loadHistory().forEach(r=>{ const hm=r.meters.find(m=>m.id===meterId); if(hm) histParts.push({ym:r.ym,savedAt:r.savedAt,meter:hm}); });
+    const dr=loadDrafts(), draftParts={}; Object.keys(dr).forEach(ym=>{ if(dr[ym] && dr[ym][meterId]) draftParts[ym]=dr[ym][meterId]; });
+    const tr=loadTrash(); tr.unshift({ id:uid(), type:'meter', deletedAt:new Date().toISOString(), meter:JSON.parse(JSON.stringify(meter)), history:histParts, drafts:draftParts, log:loadLog().filter(e=>e.meterId===meterId) }); saveTrash(tr);
     meters = meters.filter(m=>m.id!==meterId); saveMeters(meters);
     saveHistory(loadHistory().map(r=>{r.meters=r.meters.filter(m=>m.id!==meterId);r.grandTotal=r.meters.reduce((a,m)=>a+(m.totalBill||0),0);return r}).filter(r=>r.meters.length));
     const d=loadDrafts(); Object.values(d).forEach(x=>{delete x[meterId]}); saveDrafts(d);
     saveLog(loadLog().filter(e=>e.meterId!==meterId));
     renderSetupView(); renderCalcView(); renderHistoryView();
-    toast('মিটার ও এর সব তথ্য ডিলিট হয়েছে');
+    toast('মিটার ডিলিট হয়েছে — নিচের "ডিলিট করা মিটার" থেকে ফিরিয়ে আনা যাবে');
   });
 }
 function nextSubLetter(meter){
@@ -547,11 +592,16 @@ function addSub(meterId){ openMeters.add(meterId);
   renderSetupView();
 }
 function deleteSub(meterId, subId){
-  const meter = meters.find(m=>m.id===meterId);
-  (meter.removedSubs = meter.removedSubs || []).push(subId);
-  meter.subs = meter.subs.filter(s=>s.id!==subId);
-  saveMeters(meters);
-  renderSetupView();
+  const meter = meters.find(m=>m.id===meterId); if(!meter) return;
+  const sub = meter.subs.find(x=>x.id===subId); if(!sub) return;
+  askConfirm('আপনি কি সাব-মিটার <b>'+escapeHtml(sub.label)+(sub.name?' — '+escapeHtml(sub.name):'')+'</b> ডিলিট করতে চান?', ()=>{
+    const tr=loadTrash(); tr.unshift({ id:uid(), type:'sub', deletedAt:new Date().toISOString(), meterId:meter.id, meterName:meter.name, sub:JSON.parse(JSON.stringify(sub)) }); saveTrash(tr);
+    (meter.removedSubs = meter.removedSubs || []).push(subId);
+    meter.subs = meter.subs.filter(x=>x.id!==subId);
+    saveMeters(meters);
+    renderSetupView();
+    toast('সাব-মিটার ডিলিট হয়েছে — নিচ থেকে ফিরিয়ে আনা যাবে');
+  }, { title:'সাব-মিটার ডিলিট' });
 }
 function updateMeterName(meterId, val){
   const meter = meters.find(m=>m.id===meterId);
@@ -568,6 +618,7 @@ const openMeters = new Set();
 function toggleMeterOpen(id){ openMeters.has(id) ? openMeters.delete(id) : openMeters.add(id); renderSetupView(); }
 function updateSubField(mid,sid,f,v){ const m=meters.find(x=>x.id===mid), q=m&&m.subs.find(x=>x.id===sid); if(q){ q[f]=v; saveMeters(meters); } }
 function renderSetupView(){
+  renderTrash();
   const container = document.getElementById('metersContainer');
   const empty = document.getElementById('setupEmpty');
   container.innerHTML = '';
@@ -1026,7 +1077,7 @@ function togglePaid(ym, meterId, subId){
 function exportBackup(){
   const payload = {
     app: 'bidyut-bill-hisab', exportedAt: new Date().toISOString(),
-    meters: loadMeters(), history: loadHistory(), drafts: loadDrafts(), meterLog: loadLog()
+    meters: loadMeters(), history: loadHistory(), drafts: loadDrafts(), meterLog: loadLog(), trash: loadTrash()
   };
   const blob = new Blob([JSON.stringify(payload, null, 2)], {type:'application/json'});
   const url = URL.createObjectURL(blob);
@@ -1051,7 +1102,7 @@ function importBackup(file){
       }
       askConfirm('এই ব্যাকআপ রিস্টোর করলে বর্তমান সব ডেটা প্রতিস্থাপিত হয়ে যাবে। এগোতে চান?', ()=>{
         saveMeters(data.meters); saveHistory(data.history);
-        saveDrafts(data.drafts || {}); saveLog(data.meterLog || []);
+        saveDrafts(data.drafts || {}); saveLog(data.meterLog || []); saveTrash(data.trash || []);
         meters = data.meters; syncMetersFromHistory();
         renderSetupView(); renderCalcView(); renderHistoryView();
         toast('✓ ব্যাকআপ থেকে রিস্টোর হয়েছে');
@@ -1176,6 +1227,8 @@ const NEW3={"রিডিং এন্ট্রি": "Reading entry", "পূর
 BN_EN['ডিমান্ড চার্জ (প্রতি সাব-মিটার, টাকা)']='Demand charge (per sub-meter, Tk)';EN_BN['Demand charge (per sub-meter, Tk)']='ডিমান্ড চার্জ (প্রতি সাব-মিটার, টাকা)';
 const NEW4={"PIN পরিবর্তন": "Change PIN", "বর্তমান PIN": "Current PIN", "নতুন PIN": "New PIN", "নতুন PIN আবার": "Confirm new PIN", "বর্তমান PIN সঠিক নয়": "Current PIN is incorrect", "✓ PIN বদলানো হয়েছে": "✓ PIN changed", "✓ রিডিং সেভ করুন": "✓ Save readings", "সেভ করুন": "Save"};Object.keys(NEW4).forEach(k=>{BN_EN[k]=NEW4[k];EN_BN[NEW4[k]]=k;});
 const NEW5={"পেমেন্ট": "Payment", "হ্যাঁ": "Yes", "হ্যাঁ, বাকি করুন": "Yes, mark as due", "হ্যাঁ, রিস্টোর করুন": "Yes, restore", "ব্যাকআপ রিস্টোর": "Restore backup", "এই মাসটিকে আবার \"বাকি\" হিসেবে চিহ্নিত করতে চান?": "Mark this month as due again?"};Object.keys(NEW5).forEach(k=>{BN_EN[k]=NEW5[k];EN_BN[NEW5[k]]=k;});
+const NEW6={"আপনি কি সাব-মিটার": "Do you want to delete sub-meter", "সাব-মিটার ডিলিট": "Delete sub-meter", "সাব-মিটার ডিলিট হয়েছে": "Sub-meter deleted"};Object.keys(NEW6).forEach(k=>{BN_EN[k]=NEW6[k];EN_BN[NEW6[k]]=k;});
+const NEW7={"ডিলিট করা মিটার": "Deleted meters", "ফিরিয়ে আনুন": "Restore", "হ্যাঁ, ফিরিয়ে আনুন": "Yes, restore", "আপনি কি এই মিটারটি ফিরিয়ে আনতে (undo) চান?": "Do you want to restore (undo) this meter?", "আপনি কি এই সাব-মিটারটি ফিরিয়ে আনতে (undo) চান?": "Do you want to restore (undo) this sub-meter?", "✓ ফিরিয়ে আনা হয়েছে": "✓ Restored", "আগে মিটারটি ফিরিয়ে আনুন": "Restore the meter first", "এই মিটার আগে থেকেই আছে": "This meter already exists", "মিটার ডিলিট হয়েছে — নিচের \"ডিলিট করা মিটার\" থেকে ফিরিয়ে আনা যাবে": "Meter deleted — you can restore it from \"Deleted meters\" below", "সাব-মিটার ডিলিট হয়েছে — নিচ থেকে ফিরিয়ে আনা যাবে": "Sub-meter deleted — you can restore it from below"};Object.keys(NEW7).forEach(k=>{BN_EN[k]=NEW7[k];EN_BN[NEW7[k]]=k;});
 (function(){const nc=window.confirm.bind(window);window.confirm=m=>nc((localStorage.getItem('bh_language')||'bn')==='en'?replacePhrases(m,BN_EN):m)})();
 function replacePhrases(value,dict){let out=value;Object.keys(dict).sort((a,b)=>b.length-a.length).forEach(k=>{out=out.split(k).join(dict[k]);});return out;}
 function translateTextNode(node,lang){if(node.__translating)return;if(node.__baseText===undefined)node.__baseText=node.nodeValue;const base=node.__baseText;node.__translating=true;node.nodeValue=lang==='en'?replacePhrases(base,BN_EN):replacePhrases(base,EN_BN);node.__translating=false;}
