@@ -1,4 +1,3 @@
-
 # ⚡ বিদ্যুৎ বিল হিসাব — Electricity Bill Splitter
 
 A single-file web app for landlords who split one main-meter electricity bill between several sub-meter holders (tenants). Enter each sub-meter's reading and the month's total bill, and the app works out every tenant's share, tracks who has paid, and carries unpaid dues into the next month.
@@ -71,7 +70,7 @@ Example: January 56 units. In February the meter is replaced and the new meter s
 
 ## Run it
 
-1. Download `index.html` (the app is this one file).
+1. Download `index.html` (on a computer the app works from this one file).
 2. Open it in any modern browser (Chrome, Edge, Firefox, Safari — desktop or mobile).
 3. Create an account, add your meters and sub-meters, and start entering readings.
 
@@ -81,7 +80,17 @@ Example: January 56 units. In February the meter is replaced and the new meter s
 2. In the repository go to **Settings → Pages**, choose the `main` branch and the `/ (root)` folder, and save.
 3. Open the URL GitHub gives you.
 
-Opening it from Pages needs internet the first time. For offline use on a phone, open the downloaded file directly, or add the page to your home screen after it has loaded once.
+### Use it on a phone, offline
+
+The repository includes a service worker (`sw.js`) and a web app manifest, so the hosted page can be installed and opened with no internet.
+
+1. Open your GitHub Pages link in **Chrome** (Android) or **Safari** (iPhone) while online, once.
+2. Add it to the home screen — Chrome: menu → **Install app / Add to Home screen**; Safari: Share → **Add to Home Screen**.
+3. From then on, open it from the home screen. Without internet it goes straight to reading entry.
+
+Please use the hosted link on phones. Opening the downloaded `.html` from a file manager often gives the browser no storage, and then nothing can be saved. If storage is blocked the app shows a yellow warning bar.
+
+Upload all of these files together, because the offline cache needs every one of them: `index.html`, `sw.js`, `manifest.webmanifest`, `icon-192.png`, `icon-512.png`.
 
 ---
 
@@ -98,7 +107,11 @@ Opening it from Pages needs internet the first time. For offline use on a phone,
 
 ```
 .
-├── index.html   # the whole app: markup, styles and logic
+├── index.html            # the whole app: markup, styles and logic
+├── sw.js                 # service worker: caches the app for offline use
+├── manifest.webmanifest  # makes it installable on a phone
+├── icon-192.png
+├── icon-512.png
 └── README.md
 ```
 
@@ -116,6 +129,10 @@ Opening it from Pages needs internet the first time. For offline use on a phone,
 - ডেটা শুধু ওই ব্রাউজারেই থাকে। হারানোর ঝুঁকি কমাতে হিস্ট্রি ট্যাব থেকে নিয়মিত ব্যাকআপ নিন।
 
 ---
+
+## License
+
+Add the license you want to use (for example MIT) as a `LICENSE` file in the repository.
 
 ## License
 
