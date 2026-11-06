@@ -453,8 +453,25 @@ window.addEventListener('offline', connectivityMode);
 window.addEventListener('online', ()=>{ if(currentUser) setCalcMode('bill'); });
 function loadMeters(){ try{ return JSON.parse(localStorage.getItem(uk(STORE_KEY))) || []; }catch(e){ return []; } }
 function saveMeters(m){ localStorage.setItem(uk(STORE_KEY), JSON.stringify(m)); }
-function loadHistory(){ try{ return JSON.parse(localStorage.getItem(uk(HISTORY_KEY))) || []; }catch(e){ return []; } }
-function saveHistory(h){ localStorage.setItem(uk(HISTORY_KEY), JSON.stringify(h)); }
+function loadHistoryRaw(){try{return JSON.parse(localStorage.getItem(uk(HISTORY_KEY)))||[]}catch(e){return []}}
+function saveHistoryRaw(h){localStorage.setItem(uk(HISTORY_KEY),JSON.stringify(h))}
+function loadHidden(){try{return JSON.parse(localStorage.getItem(uk('billApp_hidden_v1')))||[]}catch(e){return []}}
+function saveHidden(a){localStorage.setItem(uk('billApp_hidden_v1'),JSON.stringify(a))}
+function loadHistory(){
+  const raw=loadHistoryRaw(), hid=loadHidden(); if(!hid.length) return raw;
+  return raw.map(r=>{ const ms=r.meters.filter(m=>!hid.includes(m.id)); return Object.assign({},r,{meters:ms,grandTotal:ms.reduce((a,m)=>a+(m.totalBill||0),0)}); }).filter(r=>r.meters.length);
+}
+function saveHistory(h){
+  const hid=loadHidden(); if(!hid.length){ saveHistoryRaw(h); return; }
+  const out=h.map(r=>Object.assign({},r));
+  loadHistoryRaw().forEach(rr=>{
+    const hm=rr.meters.filter(m=>hid.includes(m.id)); if(!hm.length) return;
+    let r=out.find(x=>x.ym===rr.ym); if(!r){ r={ym:rr.ym,savedAt:rr.savedAt,meters:[],grandTotal:0}; out.push(r); }
+    r.meters=r.meters.filter(m=>!hid.includes(m.id)).concat(hm);
+  });
+  out.forEach(r=>{ r.grandTotal=r.meters.filter(m=>!hid.includes(m.id)).reduce((a,m)=>a+(m.totalBill||0),0); });
+  saveHistoryRaw(out);
+}
 function loadDrafts(){ try{ return JSON.parse(localStorage.getItem(uk(DRAFTS_KEY))) || {}; }catch(e){ return {}; } }
 function saveDrafts(d){ localStorage.setItem(uk(DRAFTS_KEY), JSON.stringify(d)); }
 const LOG_KEY='billApp_meterlog_v1';
@@ -478,7 +495,7 @@ function restoreTrash(id){
   const tr=loadTrash(), it=tr.find(x=>x.id===id); if(!it) return;
   if(it.type==='meter'){
     if(meters.some(m=>m.id===it.meter.id)){ toast('এই মিটার আগে থেকেই আছে'); return; }
-    meters.push(it.meter); saveMeters(meters);
+    meters.push(it.meter); saveHidden(loadHidden().filter(x=>x!==it.meter.id)); syncMetersFromHistory(); saveMeters(meters);
     const h=loadHistory();
     it.history.forEach(pt=>{
       let r=h.find(x=>x.ym===pt.ym); if(!r){ r={ym:pt.ym,savedAt:pt.savedAt,meters:[],grandTotal:0}; h.push(r); }
@@ -558,7 +575,7 @@ const nrm = x => String(x||'').trim().toLowerCase();
 function findHistoryMeterByName(name){
   const t = loadTrash().find(x=>x.type==='meter' && nrm(x.meter.name)===nrm(name));
   if(t) return { src:'trash', item:t };
-  const hist = loadHistory().slice().sort((a,b)=>b.ym.localeCompare(a.ym));
+  const hist = loadHistoryRaw().slice().sort((a,b)=>b.ym.localeCompare(a.ym));
   for(const r of hist){ const hm = r.meters.find(m=>nrm(m.name)===nrm(name) && !meters.some(x=>x.id===m.id)); if(hm) return { src:'history', hm }; }
   return null;
 }
@@ -574,7 +591,7 @@ function addMeter(){
       if(found.src==='trash'){ restoreTrash(found.item.id); openMeters.add(found.item.meter.id); }
       else {
         meters.push({ id:found.hm.id, name:found.hm.name, demandCharge:(found.hm.meterCharge>0?found.hm.meterCharge:136), subs:[], removedSubs:[] });
-        syncMetersFromHistory(); saveMeters(meters); openMeters.add(found.hm.id);
+        saveHidden(loadHidden().filter(x=>x!==found.hm.id)); syncMetersFromHistory(); saveMeters(meters); openMeters.add(found.hm.id);
         renderCalcView(); renderHistoryView(); toast('✓ ইতিহাস থেকে যোগ হয়েছে');
       }
       input.value=''; renderSetupView();
@@ -636,11 +653,11 @@ function openAddSub(meterId){
 function deleteMeter(meterId){
   const meter = meters.find(m=>m.id===meterId); if(!meter) return;
   askConfirm('"'+escapeHtml(meter.name)+'" মিটার ডিলিট করলে এর সব সাব-মিটারের তথ্য (হিস্ট্রিসহ) ডিলিট হয়ে যাবে। আপনি কি ডিলিট করতে চান?',()=>{
-    const histParts=[]; loadHistory().forEach(r=>{ const hm=r.meters.find(m=>m.id===meterId); if(hm) histParts.push({ym:r.ym,savedAt:r.savedAt,meter:hm}); });
+    const histParts=[];
     const dr=loadDrafts(), draftParts={}; Object.keys(dr).forEach(ym=>{ if(dr[ym] && dr[ym][meterId]) draftParts[ym]=dr[ym][meterId]; });
     const tr=loadTrash(); tr.unshift({ id:uid(), type:'meter', deletedAt:new Date().toISOString(), meter:JSON.parse(JSON.stringify(meter)), history:histParts, drafts:draftParts, log:loadLog().filter(e=>e.meterId===meterId) }); saveTrash(tr);
     meters = meters.filter(m=>m.id!==meterId); saveMeters(meters);
-    saveHistory(loadHistory().map(r=>{r.meters=r.meters.filter(m=>m.id!==meterId);r.grandTotal=r.meters.reduce((a,m)=>a+(m.totalBill||0),0);return r}).filter(r=>r.meters.length));
+    saveHidden(Array.from(new Set(loadHidden().concat([meterId]))));
     const d=loadDrafts(); Object.values(d).forEach(x=>{delete x[meterId]}); saveDrafts(d);
     saveLog(loadLog().filter(e=>e.meterId!==meterId));
     renderSetupView(); renderCalcView(); renderHistoryView();
@@ -1153,7 +1170,7 @@ function togglePaid(ym, meterId, subId){
 function exportBackup(){
   const payload = {
     app: 'bidyut-bill-hisab', exportedAt: new Date().toISOString(),
-    meters: loadMeters(), history: loadHistory(), drafts: loadDrafts(), meterLog: loadLog(), trash: loadTrash()
+    meters: loadMeters(), history: loadHistoryRaw(), hidden: loadHidden(), drafts: loadDrafts(), meterLog: loadLog(), trash: loadTrash()
   };
   const blob = new Blob([JSON.stringify(payload, null, 2)], {type:'application/json'});
   const url = URL.createObjectURL(blob);
@@ -1177,7 +1194,7 @@ function importBackup(file){
         toast('এটা সঠিক ব্যাকআপ ফাইল না'); return;
       }
       askConfirm('এই ব্যাকআপ রিস্টোর করলে বর্তমান সব ডেটা প্রতিস্থাপিত হয়ে যাবে। এগোতে চান?', ()=>{
-        saveMeters(data.meters); saveHistory(data.history);
+        saveMeters(data.meters); saveHistoryRaw(data.history); saveHidden(data.hidden || []);
         saveDrafts(data.drafts || {}); saveLog(data.meterLog || []); saveTrash(data.trash || []);
         meters = data.meters; syncMetersFromHistory();
         renderSetupView(); renderCalcView(); renderHistoryView();
